@@ -2,10 +2,17 @@
  * @file Provides the base options object that applies to all tests.
  * https://github.com/babel/babel/blob/master/CONTRIBUTING.md#writing-tests
  */
-const { resolve } = require('path');
+import { resolve } from 'path';
 
-module.exports = {
-  sourceType: 'module',
+export default {
+  plugins: [
+    [
+      resolve(import.meta.dirname, '../../../src'),
+      {
+        generateScopedName: '[name]__[local]',
+      },
+    ],
+  ],
   presets: [
     [
       '@babel/env',
@@ -16,12 +23,5 @@ module.exports = {
       },
     ],
   ],
-  "plugins": [
-    [
-      resolve(__dirname, '../../../src'),
-      {
-        "generateScopedName": "[name]__[local]"
-      }
-    ]
-  ]
+  sourceType: 'module',
 };

@@ -1,5 +1,7 @@
 // @flow
 
+/* global console */
+
 import optionsDefaults from './schemas/optionsDefaults';
 import type {
   StyleModuleMapType,
@@ -33,8 +35,7 @@ const getClassNameForNamespacedStyleName = (
   // Do not use the desctructing syntax with Babel.
   // Desctructing adds _slicedToArray helper.
   const styleNameParts = styleName.split('.');
-  const importName = styleNameParts[0];
-  const moduleName = styleNameParts[1];
+  const [importName, moduleName] = styleNameParts;
   const handleMissingStyleName = handleMissingStyleNameOption
     || optionsDefaults.handleMissingStyleName;
 
@@ -127,7 +128,8 @@ export default (
         );
       }
 
-      const styleModuleMap: StyleModuleMapType = styleModuleImportMap[styleModuleImportMapKeys[0]];
+      const styleModuleMap: StyleModuleMapType
+        = styleModuleImportMap[styleModuleImportMapKeys[0]];
 
       if (!styleModuleMap[styleName]) {
         return handleError(`Could not resolve the styleName '${styleName}'.`, handleMissingStyleName);

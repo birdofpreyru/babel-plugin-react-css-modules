@@ -4,7 +4,10 @@ import { NodePath } from '@babel/core';
 
 import optionsDefaults from './schemas/optionsDefaults';
 
-const attributeNameExists = (programPath: typeof NodePath, stats: any): boolean => {
+const attributeNameExists = (
+  programPath: typeof NodePath,
+  stats: any,
+): boolean => {
   let exists = false;
 
   let { attributeNames } = optionsDefaults;

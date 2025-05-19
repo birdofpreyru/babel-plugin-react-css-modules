@@ -64,7 +64,7 @@ const escape = (string) => {
     let value;
 
     // eslint-disable-next-line no-control-regex
-    if (/[\t\n\u000B\f\r]/u.test(character)) {
+    if ((/[\t\n\u000B\f\r]/u).test(character)) {
       const codePoint = character.charCodeAt();
 
       value = `\\${codePoint.toString(16).toUpperCase()} `;
@@ -79,9 +79,9 @@ const escape = (string) => {
 
   const firstChar = string.charAt(0);
 
-  if (/^-[\d-]/u.test(output)) {
+  if ((/^-[\d-]/u).test(output)) {
     output = `\\-${output.slice(1)}`;
-  } else if (/\d/u.test(firstChar)) {
+  } else if ((/\d/u).test(firstChar)) {
     output = `\\3${firstChar} ${output.slice(1)}`;
   }
 

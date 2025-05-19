@@ -1,0 +1,12 @@
+{
+  "extends": "@tsconfig/recommended",
+  "compilerOptions": {
+    "declaration": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "outDir": "build",
+    "verbatimModuleSyntax": true
+  }
+}

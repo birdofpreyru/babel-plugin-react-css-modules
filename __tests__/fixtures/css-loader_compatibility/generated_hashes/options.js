@@ -1,9 +1,9 @@
-const path = require('path');
+import path from 'path';
 
-module.exports = {
+export default {
   plugins: [
     [
-      path.resolve(__dirname, '../../../../src'), {
+      path.resolve(import.meta.dirname, '../../../../src'), {
         generateScopedName: '[path]__[local]__[hash:base64:5]',
       },
     ],

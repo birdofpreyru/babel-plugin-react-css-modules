@@ -4,6 +4,8 @@
 // plugin, to be independent of internal `css-loader` changes that
 // from time-to-time alter the output classnames without solid reasons.
 
+/* global require */
+
 import fs from 'fs';
 import path from 'path';
 import cssesc from 'cssesc';
@@ -48,12 +50,11 @@ const getPackageInfo = (folder) => {
   let res = getPackageInfo.cache[folder];
   if (!res) {
     const pp = path.resolve(folder, 'package.json');
-    /* eslint-disable global-require, import/no-dynamic-require */
     res = fs.existsSync(pp) ? {
+      // eslint-disable-next-line import/no-dynamic-require
       name: require(pp).name,
       root: folder,
     } : getPackageInfo(path.resolve(folder, '..'));
-    /* eslint-enable global-require, import/no-dynamic-require */
     getPackageInfo.cache[folder] = res;
   }
 
@@ -82,7 +83,10 @@ const getLocalIdent = (
     .replace(/[@+/]/gu, '-');
 };
 
-const generateScopedNameFactory = (localIdentName) => (localName, assetPath) => escapeLocalident(
+const generateScopedNameFactory = (localIdentName) => (
+  localName,
+  assetPath,
+) => escapeLocalident(
   getLocalIdent(
     { resourcePath: assetPath },
     localIdentName,

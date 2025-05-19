@@ -1,5 +1,7 @@
 // @flow
 
+/* global $ReadOnlyArray, console, process, require */
+
 import {
   readFileSync,
 } from 'fs';
@@ -24,8 +26,6 @@ import type {
 
 type PluginType = string | $ReadOnlyArray<[string, mixed]>;
 
-/* eslint-enable flowtype/no-mixed */
-
 type FiletypeOptionsType = {|
   +syntax: string,
   +plugins?: $ReadOnlyArray<PluginType>,
@@ -36,10 +36,7 @@ type FiletypesConfigurationType = {
   ...
 };
 
-/* eslint-disable flowtype/no-weak-types */
 type SyntaxType = Function | Object;
-
-/* eslint-enable flowtype/no-weak-types */
 
 type OptionsType = {|
   filetypes: FiletypesConfigurationType,
@@ -63,11 +60,13 @@ const getSyntax = (filetypeOptions: FiletypeOptionsType): ?(SyntaxType) => {
     return null;
   }
 
-  // eslint-disable-next-line global-require, import/no-dynamic-require
+  // eslint-disable-next-line import/no-dynamic-require
   return require(filetypeOptions.syntax);
 };
 
-const getExtraPlugins = (filetypeOptions: ?FiletypeOptionsType): $ReadOnlyArray<any> => {
+const getExtraPlugins = (
+  filetypeOptions: ?FiletypeOptionsType,
+): $ReadOnlyArray<any> => {
   if (!filetypeOptions || !filetypeOptions.plugins) {
     return [];
   }
@@ -76,11 +75,11 @@ const getExtraPlugins = (filetypeOptions: ?FiletypeOptionsType): $ReadOnlyArray<
     if (Array.isArray(plugin)) {
       const [pluginName, pluginOptions] = plugin;
 
-      // eslint-disable-next-line global-require, import/no-dynamic-require
+      // eslint-disable-next-line import/no-dynamic-require
       return require(pluginName)(pluginOptions);
     }
 
-    // eslint-disable-next-line global-require, import/no-dynamic-require
+    // eslint-disable-next-line import/no-dynamic-require
     return require(plugin);
   });
 };
@@ -120,13 +119,16 @@ const getTokens = (
   return res.root.tokens;
 };
 
-export default (cssSourceFilePath: string, options: OptionsType): StyleModuleMapType => {
+export default (
+  cssSourceFilePath: string,
+  options: OptionsType,
+): StyleModuleMapType => {
   // eslint-disable-next-line prefer-const
   let runner: any;
   let generateScopedName;
 
   if (options.generateScopedName && typeof options.generateScopedName === 'function') {
-    generateScopedName = options.generateScopedName;
+    ({ generateScopedName } = options);
   } else {
     generateScopedName = (clazz: string, resourcePath: string) => getLocalIdent(
       // TODO: The loader context used by "css-loader" may has additional
@@ -168,7 +170,10 @@ export default (cssSourceFilePath: string, options: OptionsType): StyleModuleMap
     );
   }
 
-  const filetypeOptions = getFiletypeOptions(cssSourceFilePath, options.filetypes);
+  const filetypeOptions = getFiletypeOptions(
+    cssSourceFilePath,
+    options.filetypes,
+  );
 
   const extraPlugins = getExtraPlugins(filetypeOptions);
   const extraPluginsRunner = extraPlugins.length && postcss(extraPlugins);

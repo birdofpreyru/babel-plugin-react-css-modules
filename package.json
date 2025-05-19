@@ -1,10 +1,11 @@
 {
-  "version": "6.13.5",
+  "version": "6.14.0",
   "dependencies": {
-    "@babel/core": "^7.26.10",
-    "@babel/plugin-syntax-jsx": "^7.24.6",
-    "@babel/types": "^7.27.0",
-    "@dr.pogodin/postcss-modules-parser": "^1.2.10",
+    "@babel/core": "^7.27.1",
+    "@babel/plugin-syntax-jsx": "^7.27.1",
+    "@babel/runtime": "^7.27.1",
+    "@babel/types": "^7.27.1",
+    "@dr.pogodin/postcss-modules-parser": "^1.3.0",
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.0.0",
     "cssesc": "^3.0.0",
@@ -16,23 +17,20 @@
   },
   "description": "Transforms styleName to className using compile time CSS module resolution.",
   "devDependencies": {
-    "@babel/cli": "^7.27.0",
-    "@babel/eslint-parser": "^7.27.0",
-    "@babel/eslint-plugin": "^7.27.0",
-    "@babel/helper-plugin-test-runner": "^7.24.6",
-    "@babel/plugin-transform-flow-strip-types": "^7.26.5",
-    "@babel/plugin-transform-react-jsx": "^7.25.9",
-    "@babel/preset-env": "^7.26.9",
-    "@babel/register": "^7.25.9",
+    "@babel/cli": "^7.27.2",
+    "@babel/helper-plugin-test-runner": "^7.27.1",
+    "@babel/plugin-transform-flow-strip-types": "^7.27.1",
+    "@babel/plugin-transform-react-jsx": "^7.27.1",
+    "@babel/plugin-transform-runtime": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/register": "^7.27.1",
+    "@dr.pogodin/eslint-configs": "^0.0.6",
+    "@tsconfig/recommended": "^1.0.8",
     "babel-jest": "^29.7.0",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-plugin-tester": "^11.0.4",
     "css-loader": "^7.1.2",
-    "eslint": "^8.57.1",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-flowtype": "^8.0.3",
-    "eslint-plugin-import": "^2.31.0",
     "flow-bin": "^0.261.2",
     "jest": "^29.7.0",
     "mini-css-extract-plugin": "^2.9.2",
@@ -40,7 +38,7 @@
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
     "postcss-scss": "^4.0.9",
-    "webpack": "^5.99.7"
+    "webpack": "^5.99.8"
   },
   "funding": {
     "type": "github",
@@ -52,7 +50,7 @@
     "webpack": "5"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "jest": {
     "modulePathIgnorePatterns": [
@@ -82,7 +80,7 @@
     "build": "rm -fr ./dist && NODE_ENV=production babel ./src --out-dir ./dist --source-maps --copy-files && npm run build-helper",
     "build-helper": "mkdir -p ./dist/browser && NODE_ENV=production babel ./src/getClassName.js --out-file ./dist/browser/getClassName.js --source-maps --no-babelrc --plugins @babel/plugin-transform-modules-commonjs,@babel/plugin-transform-flow-strip-types --presets @babel/preset-env  && npm run build-schema-helper",
     "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --plugins @babel/plugin-transform-modules-commonjs,@babel/plugin-transform-flow-strip-types --presets @babel/preset-env",
-    "lint": "eslint .",
+    "lint": "eslint",
     "jest": "jest",
     "test": "npm run lint && flow && npm run jest"
   }
