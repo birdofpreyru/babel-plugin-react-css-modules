@@ -10,6 +10,7 @@ import BabelTypes, {
   jSXExpressionContainer,
   jSXIdentifier,
 } from '@babel/types';
+
 import conditionalClassMerge from './conditionalClassMerge';
 import createObjectExpression from './createObjectExpression';
 import optionsDefaults from './schemas/optionsDefaults';

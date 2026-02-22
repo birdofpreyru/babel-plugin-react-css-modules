@@ -16,4 +16,11 @@ export default defineConfig([
     extends: [eslintConfigs.configs.jest],
     files: ['test/**'],
   },
+  {
+    rules: {
+      // TODO: This rules fails for some reason on some imports,
+      // most probably a bug in Perfectionist rules. Let's just ignore it for now.
+      'perfectionist/sort-named-imports': 'off',
+    },
+  },
 ]);

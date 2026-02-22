@@ -10,12 +10,13 @@ import { readFileSync } from 'fs';
 // eslint-disable-next-line import/enforce-node-protocol-usage
 import { dirname, resolve } from 'path';
 
-import parser from '@dr.pogodin/postcss-modules-parser';
 import postcss from 'postcss';
 import ExtractImports from 'postcss-modules-extract-imports';
 import LocalByDefault from 'postcss-modules-local-by-default';
 import newScopePlugin from 'postcss-modules-scope';
 import Values from 'postcss-modules-values';
+import parser from '@dr.pogodin/postcss-modules-parser';
+
 import getLocalIdent, {
   unescape,
 } from './getLocalIdent';

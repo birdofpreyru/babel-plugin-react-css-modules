@@ -4,7 +4,7 @@
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-empty-interface
 interface PostcssPluginOptionsI {}
 
-type PostcssPluginT = string | [string, PostcssPluginOptionsI];
+type PostcssPluginT = [string, PostcssPluginOptionsI] | string;
 
 export type PluginOptionsT = {
   autoResolveMultipleImports: boolean;
@@ -14,8 +14,8 @@ export type PluginOptionsT = {
     syntax: string;
   }>;
 
-  generateScopedName?: string
-    | ((name: string, filename: string, css: string) => string);
+  generateScopedName?: ((name: string, filename: string, css: string) => string)
+    | string;
 
   replaceImport?: boolean;
 };

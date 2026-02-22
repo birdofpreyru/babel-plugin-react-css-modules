@@ -1,10 +1,10 @@
 {
   "version": "6.13.9",
   "dependencies": {
-    "@babel/core": "^7.28.4",
+    "@babel/core": "^7.29.0",
     "@babel/plugin-syntax-jsx": "^7.27.1",
     "@babel/types": "^7.28.4",
-    "@dr.pogodin/postcss-modules-parser": "^1.3.1",
+    "@dr.pogodin/postcss-modules-parser": "^1.3.2",
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.0.0",
     "cssesc": "^3.0.0",
@@ -20,15 +20,15 @@
     "@babel/helper-plugin-test-runner": "7.24.6",
     "@babel/plugin-transform-flow-strip-types": "^7.27.1",
     "@babel/preset-env": "^7.27.3",
-    "@babel/register": "^7.27.3",
-    "@dr.pogodin/eslint-configs": "0.1.0",
-    "@tsconfig/recommended": "^1.0.10",
+    "@babel/register": "^7.28.6",
+    "@dr.pogodin/eslint-configs": "^0.2.7",
+    "@tsconfig/recommended": "^1.0.13",
     "babel-jest": "^30.2.0",
     "babel-plugin-module-resolver": "^5.0.2",
-    "css-loader": "^7.1.2",
+    "css-loader": "^7.1.4",
     "flow-bin": "^0.261.2",
     "jest": "^30.2.0",
-    "mini-css-extract-plugin": "^2.9.4",
+    "mini-css-extract-plugin": "^2.10.0",
     "postcss": "^8.5.6",
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
@@ -45,7 +45,7 @@
     "webpack": "5"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "jest": {
     "modulePathIgnorePatterns": [
@@ -75,8 +75,8 @@
     "build": "rm -fr ./dist && NODE_ENV=production babel ./src --out-dir ./dist --source-maps --copy-files && npm run build-helper",
     "build-helper": "mkdir -p ./dist/browser && NODE_ENV=production babel ./src/getClassName.js --out-file ./dist/browser/getClassName.js --source-maps --no-babelrc --plugins @babel/plugin-transform-modules-commonjs,@babel/plugin-transform-flow-strip-types --presets @babel/preset-env  && npm run build-schema-helper",
     "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --plugins @babel/plugin-transform-modules-commonjs,@babel/plugin-transform-flow-strip-types --presets @babel/preset-env",
-    "lint": "eslint",
-    "jest": "jest --cache",
+    "lint": "eslint --cache",
+    "jest": "jest",
     "test": "npm run lint && flow && npm run jest"
   }
 }

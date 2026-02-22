@@ -90,8 +90,8 @@ export default (
   const styleModuleImportMapKeys = Object.keys(styleModuleImportMap);
 
   const {
-    handleMissingStyleName = optionsDefaults.handleMissingStyleName,
     autoResolveMultipleImports = optionsDefaults.autoResolveMultipleImports,
+    handleMissingStyleName = optionsDefaults.handleMissingStyleName,
   } = options || {};
 
   if (!styleNameValue) {

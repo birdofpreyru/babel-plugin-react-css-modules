@@ -6,12 +6,13 @@
 // eslint-disable-next-line import/enforce-node-protocol-usage
 import { dirname, resolve } from 'path';
 
-import { NodePath } from '@babel/core';
+import Ajv from 'ajv';
 
+import ajvKeywords from 'ajv-keywords';
+import { NodePath } from '@babel/core';
 import babelPluginJsxSyntax from '@babel/plugin-syntax-jsx';
 import BabelTypes from '@babel/types';
-import Ajv from 'ajv';
-import ajvKeywords from 'ajv-keywords';
+
 import attributeNameExists from './attributeNameExists';
 import createObjectExpression from './createObjectExpression';
 import createSpreadMapper from './createSpreadMapper';
@@ -271,7 +272,7 @@ export default ({
     visitor: {
       // const styles = require('./styles.css');
       CallExpression(path: typeof NodePath, stats: any): void {
-        const { callee: { name: calleeName }, arguments: args } = path.node;
+        const { arguments: args, callee: { name: calleeName } } = path.node;
         if (skip || calleeName !== 'require' || !args.length
           || !types.isStringLiteral(args[0])) return;
 
@@ -437,9 +438,9 @@ export default ({
         }
 
         const {
-          handleMissingStyleName = optionsDefaults.handleMissingStyleName,
           autoResolveMultipleImports
             = optionsDefaults.autoResolveMultipleImports,
+          handleMissingStyleName = optionsDefaults.handleMissingStyleName,
         } = stats.opts || {};
 
         const spreadMap = createSpreadMapper(path, stats);

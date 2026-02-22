@@ -25,14 +25,14 @@ const createObjectExpression = (
 
     if (!types.isAnyTypeAnnotation(value)) {
       switch (typeof value) {
-        case 'string':
-          newValue = types.stringLiteral(value);
+        case 'boolean':
+          newValue = types.booleanLiteral(value);
           break;
         case 'object':
           newValue = createObjectExpression(types, value);
           break;
-        case 'boolean':
-          newValue = types.booleanLiteral(value);
+        case 'string':
+          newValue = types.stringLiteral(value);
           break;
         case 'undefined':
           return;
