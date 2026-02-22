@@ -3,3 +3,4 @@ dist
 node_modules
 *.log
 /dr.pogodin-babel-plugin-react-css-modules-*.tgz
+/.eslintcache
