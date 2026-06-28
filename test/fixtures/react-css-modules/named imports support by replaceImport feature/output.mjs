@@ -1,5 +1,3 @@
-"use strict";
-
 const A = {
   "classNameA1": "a__classNameA1",
   "classNameA2": "a__classNameA2"

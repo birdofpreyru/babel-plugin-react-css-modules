@@ -9,8 +9,8 @@ import { dirname, resolve } from 'path';
 import Ajv from 'ajv';
 
 import ajvKeywords from 'ajv-keywords';
-import { NodePath } from '@babel/core';
 import babelPluginJsxSyntax from '@babel/plugin-syntax-jsx';
+import { NodePath } from '@babel/traverse';
 import BabelTypes from '@babel/types';
 
 import attributeNameExists from './attributeNameExists';

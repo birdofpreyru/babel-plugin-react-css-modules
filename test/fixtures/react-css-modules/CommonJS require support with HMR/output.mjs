@@ -1,5 +1,3 @@
-"use strict";
-
 if (import.meta.webpackHot) {
   import.meta.webpackHot.accept("./b.css", function () {
     require("./b.css");

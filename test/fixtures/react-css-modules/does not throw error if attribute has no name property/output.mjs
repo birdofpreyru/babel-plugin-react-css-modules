@@ -1,6 +1,4 @@
-"use strict";
-
-require("./bar.css");
+import './bar.css';
 const props = {
   foo: 'bar'
 };

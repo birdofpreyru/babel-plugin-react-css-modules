@@ -1,11 +1,12 @@
 {
-  "version": "6.13.9",
+  "version": "7.0.0",
   "dependencies": {
-    "@babel/core": "^7.29.0",
-    "@babel/plugin-syntax-jsx": "^7.27.1",
-    "@babel/types": "^7.28.4",
+    "@babel/core": "^8.0.1",
+    "@babel/plugin-syntax-jsx": "^8.0.1",
+    "@babel/traverse": "^8.0.0",
+    "@babel/types": "^8.0.0",
     "@dr.pogodin/postcss-modules-parser": "^1.3.2",
-    "ajv": "^8.17.1",
+    "ajv": "^8.20.0",
     "ajv-keywords": "^5.0.0",
     "cssesc": "^3.0.0",
     "loader-utils": "^3.3.1",
@@ -16,24 +17,26 @@
   },
   "description": "Transforms styleName to className using compile time CSS module resolution.",
   "devDependencies": {
-    "@babel/cli": "^7.28.3",
-    "@babel/helper-plugin-test-runner": "7.24.6",
-    "@babel/plugin-transform-flow-strip-types": "^7.27.1",
-    "@babel/preset-env": "^7.27.3",
-    "@babel/register": "^7.28.6",
-    "@dr.pogodin/eslint-configs": "^0.2.7",
+    "@babel/cli": "^8.0.1",
+    "@babel/helper-plugin-test-runner": "^8.0.0",
+    "@babel/plugin-transform-flow-strip-types": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@babel/register": "^8.0.1",
+    "@dr.pogodin/eslint-configs": "^0.3.0-alpha.3",
     "@tsconfig/recommended": "^1.0.13",
-    "babel-jest": "^30.2.0",
-    "babel-plugin-module-resolver": "^5.0.2",
+    "babel-jest": "^30.4.1",
+    "babel-plugin-external-helpers": "npm:@babel/plugin-external-helpers@^8.0.1",
+    "babel-plugin-module-resolver": "^5.0.3",
+    "babel-plugin-transform-import-meta": "^3.0.0",
     "css-loader": "^7.1.4",
     "flow-bin": "^0.261.2",
-    "jest": "^30.2.0",
-    "mini-css-extract-plugin": "^2.10.0",
-    "postcss": "^8.5.6",
+    "jest": "^30.4.2",
+    "mini-css-extract-plugin": "^2.10.2",
+    "postcss": "^8.5.16",
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
     "postcss-scss": "^4.0.9",
-    "webpack": "^5.102.0"
+    "webpack": "5.107.2"
   },
   "funding": {
     "type": "github",
@@ -45,14 +48,7 @@
     "webpack": "5"
   },
   "engines": {
-    "node": ">=20"
-  },
-  "jest": {
-    "modulePathIgnorePatterns": [
-      "/test/fixtures/"
-    ],
-    "testEnvironment": "node",
-    "testRegex": "./test/.+\\.js$"
+    "node": ">=22"
   },
   "keywords": [
     "babel",

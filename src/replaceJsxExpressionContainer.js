@@ -5,10 +5,10 @@ import BabelTypes, {
   Identifier,
   isJSXExpressionContainer,
   isStringLiteral,
-  jSXAttribute,
+  jsxAttribute,
   JSXAttribute,
-  jSXExpressionContainer,
-  jSXIdentifier,
+  jsxExpressionContainer,
+  jsxIdentifier,
 } from '@babel/types';
 
 import conditionalClassMerge from './conditionalClassMerge';
@@ -65,9 +65,9 @@ export default (
 
   if (destinationAttribute) {
     if (isStringLiteral(destinationAttribute.value)) {
-      path.node.openingElement.attributes.push(jSXAttribute(
-        jSXIdentifier(destinationName),
-        jSXExpressionContainer(
+      path.node.openingElement.attributes.push(jsxAttribute(
+        jsxIdentifier(destinationName),
+        jsxExpressionContainer(
           binaryExpression(
             '+',
             types.stringLiteral(`${destinationAttribute.value.value} `),
@@ -76,9 +76,9 @@ export default (
         ),
       ));
     } else if (isJSXExpressionContainer(destinationAttribute.value)) {
-      path.node.openingElement.attributes.push(jSXAttribute(
-        jSXIdentifier(destinationName),
-        jSXExpressionContainer(
+      path.node.openingElement.attributes.push(jsxAttribute(
+        jsxIdentifier(destinationName),
+        jsxExpressionContainer(
           conditionalClassMerge(
             destinationAttribute.value.expression,
             styleNameExpression,
@@ -89,9 +89,9 @@ export default (
       throw new Error(`Unexpected attribute value: ${destinationAttribute.value}`);
     }
   } else {
-    path.node.openingElement.attributes.push(jSXAttribute(
-      jSXIdentifier(destinationName),
-      jSXExpressionContainer(
+    path.node.openingElement.attributes.push(jsxAttribute(
+      jsxIdentifier(destinationName),
+      jsxExpressionContainer(
         styleNameExpression,
       ),
     ));

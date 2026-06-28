@@ -1,6 +1,6 @@
 // @flow
 
-import { NodePath } from '@babel/core';
+import { NodePath } from '@babel/traverse';
 
 import {
   isJSXExpressionContainer,

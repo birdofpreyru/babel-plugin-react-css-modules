@@ -1,5 +1,3 @@
-"use strict";
-
 if (module.hot) {
   module.hot.accept("./b.css", function () {
     require("./b.css");

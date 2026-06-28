@@ -105,7 +105,7 @@ function runWebpackTest({ babelOutput, cssLoaderOps, entry }) {
 // Runs Babel on test cases inside ./fixtures folder,
 // using @babel/helper-plugin-test-runner, and verifies
 // that outputs match expected values.
-runner(__dirname);
+runner(import.meta.url);
 
 // These are Webpack-based tests, comparing that outputs of Babel compilation
 // match results of css-loader CSS processing.

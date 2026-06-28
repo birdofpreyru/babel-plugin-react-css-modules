@@ -1,6 +1,4 @@
-"use strict";
-
-require("./style.less");
+import './style.less';
 if (import.meta.webpackHot) {
   import.meta.webpackHot.accept("./style.less", function () {
     require("./style.less");

@@ -1,10 +1,10 @@
 // @flow
 
-import { NodePath } from '@babel/core';
+import { NodePath } from '@babel/traverse';
 
 import {
   cloneNode,
-  Expression,
+  // type Expression,
   memberExpression,
   binaryExpression,
   conditionalExpression,
@@ -17,7 +17,7 @@ import {
 import optionsDefaults from './schemas/optionsDefaults';
 
 const createSpreadMapper = (path: typeof NodePath, stats: any): {
-  [destinationName: string]: typeof Expression,
+  [destinationName: string]: typeof memberExpression, // TODO: It should be Expression type from '@babel/types', but I am not sure now, how to express it for flow.
   ...
 } => {
   const result = {};

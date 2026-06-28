@@ -1,10 +1,8 @@
-"use strict";
-
-require("./foo.css");
+import './foo.css';
 const rest = {};
 <div {...rest} className={"b foo__a" + (" " + (rest ? rest.className || "" : ""))}></div>;
 <div {...rest} className={"foo__a" + (" " + (rest ? rest.className || "" : ""))}></div>;
-<div {...rest} activeClassName={((void 0).props.activeClassName ? (void 0).props.activeClassName + " " : "") + "foo__a" + (" " + (rest ? rest.activeClassName || "" : ""))} className={"foo__a" + (" " + (rest ? rest.className || "" : ""))}></div>;
+<div {...rest} activeClassName={(this.props.activeClassName ? this.props.activeClassName + " " : "") + "foo__a" + (" " + (rest ? rest.activeClassName || "" : ""))} className={"foo__a" + (" " + (rest ? rest.className || "" : ""))}></div>;
 <div {...rest} activeClassName={"b foo__a" + (" " + (rest ? rest.activeClassName || "" : ""))}></div>;
 
 // Should be okay if rest is put on last
