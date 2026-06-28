@@ -552,7 +552,7 @@ this, consider to spread the word to encourage more users to move to this fork.
 
 | `css-loader` versions     | this plugin versions      |
 | ------------------------- | ------------------------- |
-| `7.0.0` &ndash; `7.1.2` (latest) | `6.13.0` &ndash; `6.13.5` (latest)         |
+| `7.0.0` &ndash; `7.1.4` (latest) | `6.13.0` &ndash; `7.0.0` (latest)         |
 | `6.7.1` &ndash; `6.11.0`  | `6.7.0` &ndash; `6.12.0`  |
 | `6.5.0` &ndash; `6.7.0`   | `6.5.1` &ndash; `6.6.1`   |
 | `6.4.0`                   | `6.4.0` &ndash; `6.4.1`   |
