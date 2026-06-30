@@ -1,6 +1,9 @@
 .*
+*.config.js
+*.config.mjs
 /benchmark
 /demo
 /dr.pogodin-babel-plugin-react-css-modules-*.tgz
 /src
 /test
+tsconfig.json

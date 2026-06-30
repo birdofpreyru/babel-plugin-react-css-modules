@@ -1,5 +1,5 @@
 {
-  "version": "7.0.0",
+  "version": "7.0.1",
   "dependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-syntax-jsx": "^8.0.1",
@@ -25,6 +25,7 @@
     "@dr.pogodin/eslint-configs": "^0.3.0-alpha.3",
     "@tsconfig/recommended": "^1.0.13",
     "babel-jest": "^30.4.1",
+    "@dr.pogodin/babel-plugin-add-import-extension": "^2.1.0",
     "babel-plugin-external-helpers": "npm:@babel/plugin-external-helpers@^8.0.1",
     "babel-plugin-module-resolver": "^5.0.3",
     "babel-plugin-transform-import-meta": "^3.0.0",
@@ -72,7 +73,7 @@
     "build-helper": "mkdir -p ./dist/browser && NODE_ENV=production babel ./src/getClassName.js --out-file ./dist/browser/getClassName.js --source-maps --no-babelrc --plugins @babel/plugin-transform-modules-commonjs,@babel/plugin-transform-flow-strip-types --presets @babel/preset-env  && npm run build-schema-helper",
     "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --plugins @babel/plugin-transform-modules-commonjs,@babel/plugin-transform-flow-strip-types --presets @babel/preset-env",
     "lint": "eslint --cache",
-    "jest": "jest",
+    "jest": "jest --no-cache",
     "test": "npm run lint && flow && npm run jest"
   }
 }
