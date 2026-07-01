@@ -1,5 +1,5 @@
 {
-  "version": "7.0.3",
+  "version": "7.0.4",
   "dependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-syntax-jsx": "^8.0.1",
@@ -61,7 +61,6 @@
     "web"
   ],
   "license": "BSD-3-Clause",
-  "main": "dist/index.js",
   "name": "@dr.pogodin/babel-plugin-react-css-modules",
   "homepage": "https://dr.pogodin.studio/docs/babel-plugin-react-css-modules",
   "repository": "github:birdofpreyru/babel-plugin-react-css-modules",
@@ -75,6 +74,16 @@
     "lint": "eslint --cache",
     "jest": "jest --no-cache",
     "test": "npm run lint && flow && npm run jest"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./utils": {
+      "types": "./utils.d.ts",
+      "default": "./dist/utils.js"
+    }
   },
   "type": "module"
 }
