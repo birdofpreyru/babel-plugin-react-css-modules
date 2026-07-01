@@ -1,6 +1,8 @@
 // @flow
 
-import BabelTypes, {
+import * as BabelTypes from '@babel/types';
+
+import {
   binaryExpression,
   Identifier,
   isJSXExpressionContainer,

@@ -1,8 +1,7 @@
 // @flow
 
-import BabelTypes, {
-  ObjectExpression,
-} from '@babel/types';
+import * as BabelTypes from '@babel/types';
+import { ObjectExpression } from '@babel/types';
 
 type InputObjectType = {
   [key: string]: any,
