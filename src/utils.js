@@ -4,13 +4,14 @@
 // plugin, to be independent of internal `css-loader` changes that
 // from time-to-time alter the output classnames without solid reasons.
 
-/* global require */
-
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import cssesc from 'cssesc';
 import { interpolateName } from 'loader-utils';
+
+const require = createRequire(import.meta.url);
 
 /**
  * Normalizes file path to OS-independent format (adopted from css-loader).

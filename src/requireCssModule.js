@@ -1,10 +1,14 @@
 // @flow
 
-/* global console, process, require */
+/* global console, process */
 
 // TODO: Flow-bin has issues with using "node:" prefix.
 // eslint-disable-next-line import/enforce-node-protocol-usage
 import { readFileSync } from 'fs';
+
+// TODO: Flow-bin has issues with using "node:" prefix.
+// eslint-disable-next-line import/enforce-node-protocol-usage
+import { createRequire } from 'module';
 
 // TODO: Flow-bin has issues with using "node:" prefix.
 // eslint-disable-next-line import/enforce-node-protocol-usage
@@ -25,6 +29,9 @@ import type {
   GenerateScopedNameConfigurationType,
   StyleModuleMapType,
 } from './types';
+
+// $FlowFixMe
+const require = createRequire(import.meta.url);
 
 type PluginType = string | /* readonly */ Array<[string, mixed]>;
 
@@ -77,8 +84,8 @@ const getExtraPlugins = (
     if (Array.isArray(plugin)) {
       const [pluginName, pluginOptions] = plugin;
 
-      // eslint-disable-next-line import/no-dynamic-require
-      return require(pluginName)(pluginOptions);
+      // $FlowFixMe
+      return require(pluginName)(pluginOptions); // eslint-disable-line import/no-dynamic-require
     }
 
     // eslint-disable-next-line import/no-dynamic-require

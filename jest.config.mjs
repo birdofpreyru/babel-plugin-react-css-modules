@@ -1,5 +1,3 @@
-/* global module */
-
 const modulesToTransform = [
   '@babel',
   'babel-plugin-external-helpers',
@@ -9,7 +7,7 @@ const modulesToTransform = [
   'obug',
 ];
 
-module.exports = {
+export default {
   modulePathIgnorePatterns: [
     '/test/fixtures/',
   ],
