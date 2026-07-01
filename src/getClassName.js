@@ -3,6 +3,7 @@
 /* global console */
 
 import optionsDefaults from './schemas/optionsDefaults';
+
 import type {
   StyleModuleMapType,
   StyleModuleImportMapType,

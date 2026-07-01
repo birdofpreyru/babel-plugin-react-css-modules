@@ -10,9 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import cssesc from 'cssesc';
-import {
-  interpolateName,
-} from 'loader-utils';
+import { interpolateName } from 'loader-utils';
 
 /**
  * Normalizes file path to OS-independent format (adopted from css-loader).

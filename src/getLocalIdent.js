@@ -3,8 +3,11 @@
  */
 
 import { defaultGetLocalIdent } from 'css-loader';
-import TemplatedPathPlugin from 'webpack/lib/TemplatedPathPlugin';
-import createHash from 'webpack/lib/util/createHash';
+
+// BEWARE: We need explicit .js extensions below, as our "Add Import Extension"
+// Babel Plugin does not modify paths belonging to Node modules.
+import TemplatedPathPlugin from 'webpack/lib/TemplatedPathPlugin.js';
+import createHash from 'webpack/lib/util/createHash.js';
 
 /**
  * Interpolates path template according to data.
