@@ -21,7 +21,7 @@ import replaceJsxExpressionContainer from './replaceJsxExpressionContainer';
 import requireCssModule from './requireCssModule';
 import resolveStringLiteral from './resolveStringLiteral';
 import optionsDefaults from './schemas/optionsDefaults';
-import optionsSchema from './schemas/optionsSchema.json';
+import optionsSchema from './schemas/optionsSchema';
 
 const ajv = new Ajv({
   $data: true,
