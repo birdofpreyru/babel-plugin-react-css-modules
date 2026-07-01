@@ -11,7 +11,7 @@ import Ajv from 'ajv';
 import ajvKeywords from 'ajv-keywords';
 import babelPluginJsxSyntax from '@babel/plugin-syntax-jsx';
 import { NodePath } from '@babel/traverse';
-import BabelTypes from '@babel/types';
+import * as BabelTypes from '@babel/types';
 
 import attributeNameExists from './attributeNameExists';
 import createObjectExpression from './createObjectExpression';
