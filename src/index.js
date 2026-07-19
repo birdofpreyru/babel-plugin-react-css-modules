@@ -1,10 +1,13 @@
 // @flow
 
-/* global console, require */
+/* global console */
 
 // TODO: Flow-bin has issues with using "node:" prefix.
 // eslint-disable-next-line import/enforce-node-protocol-usage
 import { dirname, resolve } from 'path';
+
+// eslint-disable-next-line import/enforce-node-protocol-usage
+import { URL } from 'url';
 
 import Ajv from 'ajv';
 
@@ -38,7 +41,8 @@ const getTargetResourcePath = (importedPath: string, stats: any) => {
     return resolve(targetFileDirectoryPath, importedPath);
   }
 
-  return require.resolve(importedPath);
+  // $FlowFixMe
+  return new URL(import.meta.resolve(importedPath)).pathname;
 };
 
 const isFilenameExcluded = (filename: string, exclude: string) => filename.match(new RegExp(exclude, 'u'));
