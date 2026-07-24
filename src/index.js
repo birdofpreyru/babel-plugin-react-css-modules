@@ -92,7 +92,7 @@ export default ({
             styleMapsForFileByName[filename].importedHelperIndentifier,
           ),
         ],
-        types.stringLiteral('@dr.pogodin/babel-plugin-react-css-modules/dist/browser/getClassName.js'),
+        types.stringLiteral('@dr.pogodin/babel-plugin-react-css-modules/getClassName'),
       ),
     );
 

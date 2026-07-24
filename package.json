@@ -1,11 +1,11 @@
 {
-  "version": "7.0.5",
+  "version": "7.0.6",
   "dependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-syntax-jsx": "^8.0.1",
     "@babel/traverse": "^8.0.0",
     "@babel/types": "^8.0.0",
-    "@dr.pogodin/postcss-modules-parser": "^1.3.3",
+    "@dr.pogodin/postcss-modules-parser": "^1.3.4",
     "ajv": "^8.20.0",
     "ajv-keywords": "^5.0.0",
     "cssesc": "^3.0.0",
@@ -22,10 +22,10 @@
     "@babel/plugin-transform-flow-strip-types": "^8.0.1",
     "@babel/preset-env": "^8.0.2",
     "@babel/register": "^8.0.1",
-    "@dr.pogodin/eslint-configs": "^0.3.1",
+    "@dr.pogodin/eslint-configs": "^0.3.2",
     "@tsconfig/recommended": "^1.0.13",
     "babel-jest": "^30.4.1",
-    "@dr.pogodin/babel-plugin-add-import-extension": "^2.3.2",
+    "@dr.pogodin/babel-plugin-add-import-extension": "^3.0.2",
     "babel-plugin-external-helpers": "npm:@babel/plugin-external-helpers@^8.0.1",
     "babel-plugin-module-resolver": "^5.0.3",
     "babel-plugin-transform-import-meta": "^3.0.0",
@@ -33,7 +33,7 @@
     "flow-bin": "^0.261.2",
     "jest": "^30.4.2",
     "mini-css-extract-plugin": "^2.10.2",
-    "postcss": "^8.5.20",
+    "postcss": "^8.5.23",
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
     "postcss-scss": "^4.0.9",
@@ -80,6 +80,7 @@
       "types": "./index.d.ts",
       "default": "./dist/index.js"
     },
+    "./getClassName": "./dist/browser/getClassName.js",
     "./utils": {
       "types": "./utils.d.ts",
       "default": "./dist/utils.js"

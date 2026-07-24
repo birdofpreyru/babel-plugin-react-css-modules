@@ -1,4 +1,4 @@
-import _getClassName from "@dr.pogodin/babel-plugin-react-css-modules/dist/browser/getClassName.js";
+import _getClassName from "@dr.pogodin/babel-plugin-react-css-modules/getClassName";
 import './foo.css';
 const _styleModuleImportMap = {
   "./foo.css": {
