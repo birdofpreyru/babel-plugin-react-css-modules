@@ -37,7 +37,7 @@
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
     "postcss-scss": "^4.0.9",
-    "webpack": "^5.107.2"
+    "webpack": "^5.110.1"
   },
   "funding": {
     "type": "github",
@@ -46,7 +46,7 @@
   "peerDependencies": {
     "css-loader": ">=6",
     "postcss": "8",
-    "webpack": "5"
+    "webpack": ">=5.108"
   },
   "engines": {
     "node": ">=22"

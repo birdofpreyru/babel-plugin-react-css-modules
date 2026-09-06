@@ -40,6 +40,8 @@ let getPath;
         },
       },
     },
+    options: { optimization: {} },
+    outputOptions: {},
     tap: (_, fn) => {
       fn(mockCompilation);
     },
