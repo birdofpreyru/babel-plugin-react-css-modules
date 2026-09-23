@@ -1,6 +1,10 @@
 // @flow
 
-/* global console, process */
+/* global console */
+
+// TODO: Flow-bin has issues with using "node:" prefix.
+// eslint-disable-next-line import/enforce-node-protocol-usage
+import { Buffer } from 'buffer';
 
 // TODO: Flow-bin has issues with using "node:" prefix.
 // eslint-disable-next-line import/enforce-node-protocol-usage
@@ -14,6 +18,10 @@ import { createRequire } from 'module';
 // eslint-disable-next-line import/enforce-node-protocol-usage
 import { dirname, resolve } from 'path';
 
+// TODO: Flow-bin has issues with using "node:" prefix.
+// eslint-disable-next-line import/enforce-node-protocol-usage
+import { Worker } from 'worker_threads';
+
 import postcss from 'postcss';
 import ExtractImports from 'postcss-modules-extract-imports';
 import LocalByDefault from 'postcss-modules-local-by-default';
@@ -22,9 +30,6 @@ import Values from 'postcss-modules-values';
 
 import parser from '@dr.pogodin/postcss-modules-parser';
 
-import getLocalIdent, { unescape } from './getLocalIdent';
-import optionsDefaults from './schemas/optionsDefaults';
-
 import type {
   GenerateScopedNameConfigurationType,
   StyleModuleMapType,
@@ -32,6 +37,19 @@ import type {
 
 // $FlowFixMe
 const require = createRequire(import.meta.url);
+
+const buffer = new Uint8Array(new SharedArrayBuffer(0, {
+  maxByteLength: 1024 * 1024, // 1MB
+}));
+
+const resultSize = new Float64Array(new SharedArrayBuffer(8));
+const worker = new Worker(`${import.meta.dirname}/worker.js`);
+
+function waitResult() {
+  while (!resultSize[0]);
+  const data = Buffer.from(buffer.buffer, 0, resultSize[0]);
+  return JSON.parse(data.toString('utf8'));
+}
 
 type PluginType = string | /* readonly */ Array<[string, mixed]>;
 
@@ -93,6 +111,17 @@ const getExtraPlugins = (
   });
 };
 
+/**
+ * The first-level cache = full file path + name.
+ * The object: {
+ *   compiled: boolean;
+ *   tokens: {
+ *     [local]: 'transformed';
+ *   }
+ * }
+ */
+const cache = {};
+
 const getTokens = (
   extraPluginsRunner: any,
   runner: any,
@@ -125,7 +154,39 @@ const getTokens = (
     console.warn(message.text);
   });
 
-  return res.root.tokens;
+  const bucket = cache[cssSourceFilePath];
+  if (bucket.compiled) return bucket.tokens;
+
+  let css = '';
+  for (const className of Object.keys(bucket.tokens)) {
+    css += `.${className} {}\n`;
+  }
+
+  resultSize[0] = 0;
+
+  worker.postMessage({
+    css,
+    path: options.from,
+    type: 'css',
+  });
+
+  const result = waitResult();
+
+  let tokens;
+
+  switch (result.type) {
+    case 'error':
+      throw Error(result.error);
+    case 'result':
+      tokens = Object.fromEntries(result.mapEntries);
+      bucket.tokens = tokens;
+      bucket.compiled = true;
+      break;
+    default:
+      throw Error('Internal error');
+  }
+
+  return tokens;
 };
 
 export default (
@@ -134,50 +195,40 @@ export default (
 ): StyleModuleMapType => {
   // eslint-disable-next-line prefer-const
   let runner: any;
-  let generateScopedName;
 
-  if (options.generateScopedName && typeof options.generateScopedName === 'function') {
-    ({ generateScopedName } = options);
-  } else {
-    generateScopedName = (clazz: string, resourcePath: string) => getLocalIdent(
-      // TODO: The loader context used by "css-loader" may has additional
-      // stuff inside this argument (loader context), allowing for some edge
-      // cases (though, presumably not with a typical configurations)
-      // we don't support (yet?).
-      { resourcePath },
+  /**
+   * Rather than actually generating scoped names, this function only populates
+   * `cache` structure with local names to be transformed for each file, and
+   * returns the same dummy result for every invokation. The data placed into
+   * `cache` will be later compiled with Webpack, and the actual scoped names
+   * will be extracted from those compilation results.
+   */
+  const generateScopedName = (className: string, resourcePath: string) => {
+    let bucket = cache[resourcePath];
 
-      options.generateScopedName || optionsDefaults.generateScopedName,
-      unescape(clazz),
-      {
-        clazz,
-        context: options.context || process.cwd(),
+    if (!bucket) {
+      bucket = { compiled: false, tokens: {} };
+      cache[resourcePath] = bucket;
+    }
 
-        // TODO: These options should match their counterparts in Webpack
-        // configuration:
-        //  - https://webpack.js.org/configuration/output/#outputhashdigest
-        //  - https://webpack.js.org/configuration/output/#outputhashdigestlength
-        //  - https://webpack.js.org/configuration/output/#outputhashfunction
-        //  - https://webpack.js.org/configuration/output/#outputhashsalt
-        // and they should be exposed as babel-plugin-react-css-modules
-        // options. However, for now they are just hardcoded equal to
-        // the Webpack's default settings.
-        hashDigest: 'hex',
-        hashDigestLength: 20,
-        hashFunction: 'md4',
-        hashSalt: '',
+    if (bucket.compiled) {
+      if (!bucket.tokens[className]) throw Error('Internal error');
+    } else bucket.tokens[className] = null;
 
-        // TODO: This option was introduced by css-loader@6.6.0.
-        // To keep getLocalIdent() in sync with css-loader implementation,
-        // I updated the code there, but similar to the parameters above,
-        // it is not yet exposed as this plugin's option.
-        hashStrategy: 'resource-path-and-local-name',
+    return '.placeholder';
+  };
 
-        // TODO: This one allows for some path modifications during
-        // the transform. Probably, not a Webpack param.
-        regExp: '',
-      },
-    );
+  if (options.generateScopedName && typeof options.generateScopedName !== 'string') {
+    throw Error('Invalid "generateScopedName" option value');
   }
+
+  worker.postMessage({
+    additionalFileTypes: options.filetypes && Object.keys(options.filetypes),
+    buffer,
+    localIdentName: options.generateScopedName,
+    resultSize,
+    type: 'config',
+  });
 
   const filetypeOptions = getFiletypeOptions(
     cssSourceFilePath,

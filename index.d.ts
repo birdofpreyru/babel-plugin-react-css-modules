@@ -14,8 +14,7 @@ export type PluginOptionsT = {
     syntax: string;
   }>;
 
-  generateScopedName?: ((name: string, filename: string, css: string) => string)
-    | string;
+  generateScopedName?: string;
 
   replaceImport?: boolean;
 };
