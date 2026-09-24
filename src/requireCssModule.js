@@ -1,6 +1,6 @@
 // @flow
 
-/* global console */
+/* global console, clearTimeout, setTimeout */
 
 // TODO: Flow-bin has issues with using "node:" prefix.
 // eslint-disable-next-line import/enforce-node-protocol-usage
@@ -43,7 +43,10 @@ const buffer = new Uint8Array(new SharedArrayBuffer(0, {
 }));
 
 const resultSize = new Float64Array(new SharedArrayBuffer(8));
-const worker = new Worker(`${import.meta.dirname}/worker.js`);
+
+let worker;
+let workerUsers = 0;
+let workerTerminateId;
 
 function waitResult() {
   while (!resultSize[0]);
@@ -188,6 +191,28 @@ const getTokens = (
 
   return tokens;
 };
+
+export function startWorker() {
+  if (workerTerminateId) {
+    clearTimeout(workerTerminateId);
+    workerTerminateId = undefined;
+  }
+
+  ++workerUsers;
+  worker ??= new Worker(`${import.meta.dirname}/worker.js`);
+}
+
+export function stopWorker() {
+  if (!--workerUsers) {
+    if (workerTerminateId) throw Error('Internal error');
+
+    workerTerminateId = setTimeout(() => {
+      worker.terminate();
+      worker = undefined;
+      workerTerminateId = undefined;
+    }, 1000);
+  }
+}
 
 export default (
   cssSourceFilePath: string,

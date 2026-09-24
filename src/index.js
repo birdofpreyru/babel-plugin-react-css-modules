@@ -21,7 +21,7 @@ import createObjectExpression from './createObjectExpression';
 import createSpreadMapper from './createSpreadMapper';
 import handleSpreadClassName from './handleSpreadClassName';
 import replaceJsxExpressionContainer from './replaceJsxExpressionContainer';
-import requireCssModule from './requireCssModule';
+import requireCssModule, { startWorker, stopWorker } from './requireCssModule';
 import resolveStringLiteral from './resolveStringLiteral';
 import optionsDefaults from './schemas/optionsDefaults';
 import optionsSchema from './schemas/optionsSchema';
@@ -273,38 +273,49 @@ export default ({
 
   return {
     inherits: babelPluginJsxSyntax,
+    post() {
+      stopWorker();
+    },
+    pre() {
+      startWorker();
+    },
     visitor: {
       // const styles = require('./styles.css');
       CallExpression(path: typeof NodePath, stats: any): void {
-        const { arguments: args, callee: { name: calleeName } } = path.node;
-        if (skip || calleeName !== 'require' || !args.length
-          || !types.isStringLiteral(args[0])) return;
+        try {
+          const { arguments: args, callee: { name: calleeName } } = path.node;
+          if (skip || calleeName !== 'require' || !args.length
+            || !types.isStringLiteral(args[0])) return;
 
-        const importedPath = args[0].value;
-        if (notForPlugin(importedPath, stats)) return;
+          const importedPath = args[0].value;
+          if (notForPlugin(importedPath, stats)) return;
 
-        const targetResourcePath = getTargetResourcePath(importedPath, stats);
+          const targetResourcePath = getTargetResourcePath(importedPath, stats);
 
-        const isAssigned = path.parentPath.type === 'VariableDeclarator';
-        const styleImportName: string = isAssigned
-          ? path.parentPath.node.id.name : importedPath;
+          const isAssigned = path.parentPath.type === 'VariableDeclarator';
+          const styleImportName: string = isAssigned
+            ? path.parentPath.node.id.name : importedPath;
 
-        const styleMap = loadStyleMap(
-          styleImportName,
-          importedPath,
-          targetResourcePath,
-          path,
-          stats,
-        );
+          const styleMap = loadStyleMap(
+            styleImportName,
+            importedPath,
+            targetResourcePath,
+            path,
+            stats,
+          );
 
-        if (stats.opts.replaceImport) {
-          if (isAssigned) {
-            path.replaceWith(
-              createObjectExpression(types, styleMap),
-            );
-          } else path.remove();
-        } else if (stats.opts.removeImport) {
-          path.remove();
+          if (stats.opts.replaceImport) {
+            if (isAssigned) {
+              path.replaceWith(
+                createObjectExpression(types, styleMap),
+              );
+            } else path.remove();
+          } else if (stats.opts.removeImport) {
+            path.remove();
+          }
+        } catch (error) {
+          stopWorker();
+          throw error;
         }
       },
 
@@ -314,202 +325,221 @@ export default ({
       // import { className } from './style.css';
       // import Style, { className } from './style.css';
       ImportDeclaration(path: typeof NodePath, stats: any): void {
-        const importedPath = path.node.source.value;
-        if (skip || notForPlugin(importedPath, stats)) return;
+        try {
+          const importedPath = path.node.source.value;
+          if (skip || notForPlugin(importedPath, stats)) return;
 
-        const targetResourcePath = getTargetResourcePath(importedPath, stats);
+          const targetResourcePath = getTargetResourcePath(importedPath, stats);
 
-        let styleImportName: string;
-        const { specifiers } = path.node;
+          let styleImportName: string;
+          const { specifiers } = path.node;
 
-        const guardStyleImportNameIsNotSet = () => {
-          if (styleImportName) {
-            // If this throws, it means we are missing something in our logic
-            // below, and although it might look functional, it does not produce
-            // determenistic style import selection.
-            // eslint-disable-next-line no-console
-            console.warn('Please report your use case. https://github.com/birdofpreyru/babel-plugin-react-css-modules/issues/new?title=Unexpected+use+case.');
-            throw Error('Style import name is already selected');
-          }
-        };
-
-        for (let i = 0; i < specifiers.length; ++i) {
-          const specifier = specifiers[i];
-          switch (specifier.type) {
-            // import Style from './style.css';
-            case 'ImportDefaultSpecifier':
-              guardStyleImportNameIsNotSet();
-              styleImportName = specifier.local.name;
-              break;
-
-            // import * as Style from './style.css';
-            case 'ImportNamespaceSpecifier':
-              guardStyleImportNameIsNotSet();
-              styleImportName = specifier.local.name;
-              break;
-
-            // These are individual class names in the named import:
-            // import { className } from './style.css';
-            // we just ignore them, falling back to either the default
-            // import, or the imported path.
-            case 'ImportSpecifier':
-              break;
-
-            default:
+          const guardStyleImportNameIsNotSet = () => {
+            if (styleImportName) {
+              // If this throws, it means we are missing something in our logic
+              // below, and although it might look functional, it does not produce
+              // determenistic style import selection.
               // eslint-disable-next-line no-console
               console.warn('Please report your use case. https://github.com/birdofpreyru/babel-plugin-react-css-modules/issues/new?title=Unexpected+use+case.');
-
-              throw new Error('Unexpected use case.');
-          }
-        }
-
-        // Fallback for anonymous style import:
-        // import './style.css';
-        if (styleImportName === undefined) styleImportName = importedPath;
-
-        const styleMap = loadStyleMap(
-          styleImportName,
-          importedPath,
-          targetResourcePath,
-          path,
-          stats,
-        );
-
-        if (stats.opts.replaceImport) {
-          const variables = [];
+              throw Error('Style import name is already selected');
+            }
+          };
 
           for (let i = 0; i < specifiers.length; ++i) {
             const specifier = specifiers[i];
             switch (specifier.type) {
+              // import Style from './style.css';
               case 'ImportDefaultSpecifier':
+                guardStyleImportNameIsNotSet();
+                styleImportName = specifier.local.name;
+                break;
+
+              // import * as Style from './style.css';
               case 'ImportNamespaceSpecifier':
-                variables.push(
-                  types.variableDeclarator(
-                    types.identifier(specifier.local.name),
-                    createObjectExpression(types, styleMap),
-                  ),
-                );
+                guardStyleImportNameIsNotSet();
+                styleImportName = specifier.local.name;
                 break;
-              case 'ImportSpecifier': {
-                const value = styleMap[specifier.imported.name];
-                variables.push(
-                  types.variableDeclarator(
-                    types.identifier(specifier.local.name),
-                    value === undefined
-                      ? undefined : types.stringLiteral(value),
-                  ),
-                );
+
+              // These are individual class names in the named import:
+              // import { className } from './style.css';
+              // we just ignore them, falling back to either the default
+              // import, or the imported path.
+              case 'ImportSpecifier':
                 break;
-              }
+
               default:
-                throw Error('Unsupported kind of import');
+                // eslint-disable-next-line no-console
+                console.warn('Please report your use case. https://github.com/birdofpreyru/babel-plugin-react-css-modules/issues/new?title=Unexpected+use+case.');
+
+                throw new Error('Unexpected use case.');
             }
           }
 
-          if (variables.length) {
-            path.replaceWith(
-              types.variableDeclaration('const', variables),
-            );
-          } else path.remove();
-        } else if (stats.opts.removeImport) {
-          path.remove();
+          // Fallback for anonymous style import:
+          // import './style.css';
+          if (styleImportName === undefined) styleImportName = importedPath;
+
+          const styleMap = loadStyleMap(
+            styleImportName,
+            importedPath,
+            targetResourcePath,
+            path,
+            stats,
+          );
+
+          if (stats.opts.replaceImport) {
+            const variables = [];
+
+            for (let i = 0; i < specifiers.length; ++i) {
+              const specifier = specifiers[i];
+              switch (specifier.type) {
+                case 'ImportDefaultSpecifier':
+                case 'ImportNamespaceSpecifier':
+                  variables.push(
+                    types.variableDeclarator(
+                      types.identifier(specifier.local.name),
+                      createObjectExpression(types, styleMap),
+                    ),
+                  );
+                  break;
+                case 'ImportSpecifier': {
+                  const value = styleMap[specifier.imported.name];
+                  variables.push(
+                    types.variableDeclarator(
+                      types.identifier(specifier.local.name),
+                      value === undefined
+                        ? undefined : types.stringLiteral(value),
+                    ),
+                  );
+                  break;
+                }
+                default:
+                  throw Error('Unsupported kind of import');
+              }
+            }
+
+            if (variables.length) {
+              path.replaceWith(
+                types.variableDeclaration('const', variables),
+              );
+            } else path.remove();
+          } else if (stats.opts.removeImport) {
+            path.remove();
+          }
+        } catch (error) {
+          stopWorker();
+          throw error;
         }
       },
 
       JSXElement(path: typeof NodePath, stats: any): void {
-        if (skip) {
-          return;
-        }
+        try {
+          if (skip) {
+            return;
+          }
 
-        const { filename } = stats.file.opts;
+          const { filename } = stats.file.opts;
 
-        if (
-          stats.opts.exclude
-          && isFilenameExcluded(filename, stats.opts.exclude)
-        ) return;
+          if (
+            stats.opts.exclude
+            && isFilenameExcluded(filename, stats.opts.exclude)
+          ) return;
 
-        let { attributeNames } = optionsDefaults;
+          let { attributeNames } = optionsDefaults;
 
-        if (stats.opts && stats.opts.attributeNames) {
-          attributeNames = { ...attributeNames, ...stats.opts.attributeNames };
-        }
+          if (stats.opts && stats.opts.attributeNames) {
+            attributeNames = {
+              ...attributeNames,
+              ...stats.opts.attributeNames,
+            };
+          }
 
-        const attributes = path.node.openingElement.attributes
-          .filter((attribute) => typeof attribute.name !== 'undefined' && typeof attributeNames[attribute.name.name] === 'string');
+          const attributes = path.node.openingElement.attributes
+            .filter((attribute) => typeof attribute.name !== 'undefined' && typeof attributeNames[attribute.name.name] === 'string');
 
-        if (attributes.length === 0) {
-          return;
-        }
+          if (attributes.length === 0) {
+            return;
+          }
 
-        const {
-          autoResolveMultipleImports
-            = optionsDefaults.autoResolveMultipleImports,
-          handleMissingStyleName = optionsDefaults.handleMissingStyleName,
-        } = stats.opts || {};
+          const {
+            autoResolveMultipleImports
+              = optionsDefaults.autoResolveMultipleImports,
+            handleMissingStyleName = optionsDefaults.handleMissingStyleName,
+          } = stats.opts || {};
 
-        const spreadMap = createSpreadMapper(path, stats);
+          const spreadMap = createSpreadMapper(path, stats);
 
-        attributes.forEach((attribute) => {
-          const destinationName = attributeNames[attribute.name.name];
+          attributes.forEach((attribute) => {
+            const destinationName = attributeNames[attribute.name.name];
 
-          const options = {
-            autoResolveMultipleImports,
-            handleMissingStyleName,
-          };
+            const options = {
+              autoResolveMultipleImports,
+              handleMissingStyleName,
+            };
 
-          if (types.isStringLiteral(attribute.value)) {
-            resolveStringLiteral(
-              path,
-              styleMapsForFileByName[filename].styleModuleImportMap,
-              attribute,
-              destinationName,
-              options,
-            );
-          } else if (types.isJSXExpressionContainer(attribute.value)) {
-            if (!styleMapsForFileByName[filename].importedHelperIndentifier) {
-              setupFileForRuntimeResolution(path, filename);
+            if (types.isStringLiteral(attribute.value)) {
+              resolveStringLiteral(
+                path,
+                styleMapsForFileByName[filename].styleModuleImportMap,
+                attribute,
+                destinationName,
+                options,
+              );
+            } else if (types.isJSXExpressionContainer(attribute.value)) {
+              if (!styleMapsForFileByName[filename].importedHelperIndentifier) {
+                setupFileForRuntimeResolution(path, filename);
+              }
+
+              replaceJsxExpressionContainer(
+                types,
+                path,
+                attribute,
+                destinationName,
+                styleMapsForFileByName[filename].importedHelperIndentifier,
+                types.cloneNode(
+                  styleMapsForFileByName[filename]
+                    .styleModuleImportMapIdentifier,
+                ),
+                options,
+              );
             }
 
-            replaceJsxExpressionContainer(
-              types,
-              path,
-              attribute,
-              destinationName,
-              styleMapsForFileByName[filename].importedHelperIndentifier,
-              types.cloneNode(
-                styleMapsForFileByName[filename].styleModuleImportMapIdentifier,
-              ),
-              options,
-            );
-          }
-
-          if (spreadMap[destinationName]) {
-            handleSpreadClassName(
-              path,
-              destinationName,
-              spreadMap[destinationName],
-            );
-          }
-        });
+            if (spreadMap[destinationName]) {
+              handleSpreadClassName(
+                path,
+                destinationName,
+                spreadMap[destinationName],
+              );
+            }
+          });
+        } catch (error) {
+          stopWorker();
+          throw error;
+        }
       },
 
       Program(path: typeof NodePath, stats: any): void {
-        if (!validate(stats.opts)) {
-          // eslint-disable-next-line no-console
-          console.error(validate.errors);
+        try {
+          if (!validate(stats.opts)) {
+            // eslint-disable-next-line no-console
+            console.error(validate.errors);
 
-          throw new Error('Invalid configuration');
-        }
+            throw new Error('Invalid configuration');
+          }
 
-        const { filename } = stats.file.opts;
+          const { filename } = stats.file.opts;
 
-        styleMapsForFileByName[filename] = {
-          styleModuleImportMap: {},
-        };
-        styleMapsForFileByPath[filename] = {};
+          styleMapsForFileByName[filename] = {
+            styleModuleImportMap: {},
+          };
+          styleMapsForFileByPath[filename] = {};
 
-        if (stats.opts.skip && !attributeNameExists(path, stats)) {
-          skip = true;
+          if (stats.opts.skip && !attributeNameExists(path, stats)) {
+            skip = true;
+          }
+        } catch (error) {
+          stopWorker();
+          throw error;
         }
       },
     },
