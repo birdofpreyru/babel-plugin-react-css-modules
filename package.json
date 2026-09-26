@@ -1,5 +1,5 @@
 {
-  "version": "8.0.0-alpha.2",
+  "version": "8.0.0-alpha.3",
   "dependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-syntax-jsx": "^8.0.1",
@@ -76,11 +76,7 @@
       "types": "./index.d.ts",
       "default": "./dist/index.js"
     },
-    "./getClassName": "./dist/browser/getClassName.js",
-    "./utils": {
-      "types": "./utils.d.ts",
-      "default": "./dist/utils.js"
-    }
+    "./getClassName": "./dist/browser/getClassName.js"
   },
   "type": "module"
 }
