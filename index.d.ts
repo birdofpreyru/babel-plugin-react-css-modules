@@ -9,12 +9,14 @@ type PostcssPluginT = [string, PostcssPluginOptionsI] | string;
 export type PluginOptionsT = {
   autoResolveMultipleImports: boolean;
 
+  context?: string;
+
   filetypes?: Record<`.${string}`, {
     plugins?: PostcssPluginT[];
     syntax: string;
   }>;
 
   generateScopedName?: string;
-
   replaceImport?: boolean;
+  uniqueName?: string;
 };

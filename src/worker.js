@@ -7,6 +7,7 @@ import webpack from 'webpack';
 
 const fs = createFsFromVolume(new Volume());
 
+let context;
 let compiler;
 let localIdentName;
 let filetypes = '\\.css';
@@ -15,6 +16,8 @@ let buffer;
 
 // That's fine, it is watched and read on the master thread.
 let resultSize; // Float64Array.
+
+let uniqueName;
 
 /**
  * Posts `result` to the master thread via the shared `buffer` and `resultSize`.
@@ -40,13 +43,16 @@ parentPort.on('message', (message) => {
 
       if (
         !compiler
+        || context !== message.context
         || filetypes !== newFileTypes
         || localIdentName !== message.localIdentName
+        || uniqueName !== message.uniqueName
       ) {
         filetypes = newFileTypes;
-        ({ localIdentName } = message);
+        ({ context, localIdentName, uniqueName } = message);
 
         compiler = webpack({
+          context,
           entry: '/index.js',
           experiments: { css: true },
           mode: 'development',
@@ -70,6 +76,7 @@ parentPort.on('message', (message) => {
           },
           output: {
             path: '/output',
+            uniqueName,
           },
         });
 

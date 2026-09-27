@@ -3,7 +3,7 @@ const optionsDefaults = {
     styleName: 'className',
   },
   autoResolveMultipleImports: true,
-  generateScopedName: '[path]___[name]__[local]___[hash:base64:5]',
+  generateScopedName: '[path]___[name]__[local]___[fullhash:base64:5]',
   handleMissingStyleName: 'throw',
 };
 

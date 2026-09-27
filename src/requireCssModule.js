@@ -250,9 +250,11 @@ export default (
   worker.postMessage({
     additionalFileTypes: options.filetypes && Object.keys(options.filetypes),
     buffer,
+    context: options.context,
     localIdentName: options.generateScopedName,
     resultSize,
     type: 'config',
+    uniqueName: options.uniqueName,
   });
 
   const filetypeOptions = getFiletypeOptions(

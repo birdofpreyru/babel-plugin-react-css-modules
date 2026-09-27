@@ -29,6 +29,7 @@
 - [Usage examples](#usage-examples)
 - [Installation](#installation)
   - [React Native](#react-native)
+- [Migration v7 &rArr; v8]
 - [Configuration](#configuration)
   - [Plugin options](#plugin-options)
   - [Configurate syntax loaders]
@@ -161,9 +162,9 @@ export default function Component() {
 }
 ```
 
-While by default this plugin transforms it into (leaving it to the Webpack's
-**css-loader** to handle `./style.scss` import for the actual CSS bundling,
-and leaving a correct JS in place of it):
+While by default this plugin transforms it into (leaving it to the Webpack
+to handle `./style.scss` import for the actual CSS bundling, and leaving
+a correct JS in place of it):
 ```jsx
 import S from './style.css';
 
@@ -262,19 +263,37 @@ Remember, also, that the bundler caches things like plugins and presets. If you
 want to change your `.babelrc` (to add this plugin) then you'll want to add the
 `--reset-cache` flag to the end of the package command.
 
+## Migration v7 &rArr; v8
+[Migration v7 &rArr; v8]: #migration-v7--v8
+
+1.  Migrate your CSS processing from [css-loader] to Webpack's [Native CSS].
+
+2.  Make sure the `generateScopedName` option of this plugin is set to a string,
+    matching the `localIdentName` option in the Webpack's settings for CSS modules.
+    It is recommended to set both explicitly,
+    _e.g._ `[file]__[local]__[fullhash:base64:6]` for development,
+    and `[fullhash:base64:6]` for production builds.
+
+3.  When Webpack generates hashes for the output class names, it always includes
+    `[file]` (relative to the Webpack context) and `[uniqueName]` into the hashed
+    data (even if they are not a part of the `localIdentName` string). Explicitly
+    set `context` and `uniqueName` options of this plugin to the values matching
+    Webpack's ones, and double-check that you get matching class names in your
+    output CSS and JS code, as well as between client- and server-side builds
+    (in case you do server-side rendering).
+
 ## Configuration
 
 ### Plugin Options
 
 These are valid plugin options. All are optional, but the overall configuration
-should be compatible with that of `css-loader`, thus defaults may not work for
-you.
+should be compatible with that of Webpack's [Native CSS] settings, thus defaults
+may not work for you.
 
-- `context` - **string** - Must match webpack
+- `context` &mdash; **string** &mdash; Must match webpack
   [`context`](https://webpack.js.org/configuration/entry-context/#context)
-  configuration. `css-loader` inherits `context` values from webpack. Other CSS
-  module implementations might use different context resolution logic.
-  Defaults `process.cwd()`.
+  configuration. Defaults `process.cwd()`.
+
 - `exclude` - **string** - A RegExp that will exclude otherwise included files
   _e.g._, to exclude all styles from node_modules: `exclude: 'node_modules'`.
 - `filetypes` - [Configurate syntax loaders] like sugarss, LESS and SCSS,
@@ -283,7 +302,7 @@ you.
 - `generateScopedName` - **string** - Allows to customize the exact
   `styleName` to `className` conversion algorithm. For details see
   [Native CSS].
-  Defaults `[path]___[name]__[local]___[hash:base64:5]`.
+  Defaults `[path]___[name]__[local]___[fullhash:base64:5]`.
 
 - `replaceImport` - **boolean** - Replaces / removes stylesheet imports for
   server-side rendering purposes. [See details below](#server-side-rendering).
@@ -303,6 +322,11 @@ you.
   in place of the original CSS.
 - `autoResolveMultipleImports` - **boolean** - Allows multiple anonymous imports if
   `styleName` is only in one of them. Defaults **true**.
+
+- `uniqueName` &mdash; **string** &mdash; Must match Webpack's
+  [output.uniqueName](https://webpack.js.org/configuration/output/#outputuniquename)
+  configuration. Undefined by default (and does not attempt to match
+  the Webpack's defaults).
 
 ### Deprecated Plugin Options
 - ~~`removeImport` - **boolean**~~ &mdash; Use `replaceImport` option instead.
@@ -434,7 +458,7 @@ const style = {
 This plugin does the following:
 1.  Builds index of all stylesheet imports per file (imports of files with
     `.css` or `.scss` extension).
-2.  Uses [postcss](https://github.com/postcss/postcss) to parse the matching
+2.  Uses [postcss] and [Webpack] to parse the matching
     CSS files into a lookup of CSS module references.
 3.  Iterates through all
     [JSX](https://facebook.github.io/react/docs/jsx-in-depth.html)
@@ -456,7 +480,7 @@ This plugin does the following:
 - It started in 2020 as a fork of the original 
   [babel-plugin-react-css-modules](https://www.npmjs.com/package/babel-plugin-react-css-modules) plugin,
   abandoned by its author since about a year before, as new releases of
-  Webpack and `css-loader` were incompatible with the original plugin
+  [Webpack] and [css-loader] were incompatible with the original plugin
   and required numerous upgrades.
 
   NOTE: The owner of the original package removed all announcements of this
@@ -467,7 +491,7 @@ This plugin does the following:
   and got some new features.
 
 - In 2026 its v8 dropped dependency on (compatibility with) then deprecated
-  `css-loader`, and now aims on compatibility with [Webpack]'s [Native CSS]
+  [css-loader], and now aims on compatibility with [Webpack]'s [Native CSS]
   processing.
 
 <!-- Reusable links -->
@@ -478,6 +502,7 @@ This plugin does the following:
 [CSS modules]: https://github.com/css-modules/css-modules
 [Create React App]: https://create-react-app.dev
 [Native CSS]: https://webpack.js.org/guides/native-css
+[postcss]: https://github.com/postcss/postcss
 [React]: https://reactjs.org
 [Webpack]: https://webpack.js.org
 

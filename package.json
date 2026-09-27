@@ -1,5 +1,5 @@
 {
-  "version": "8.0.0-alpha.3",
+  "version": "8.0.0-alpha.4",
   "dependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-syntax-jsx": "^8.0.1",
@@ -34,7 +34,7 @@
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
     "postcss-scss": "^4.0.9",
-    "webpack": "^5.110.2"
+    "webpack": "^5.111.1"
   },
   "funding": {
     "type": "github",

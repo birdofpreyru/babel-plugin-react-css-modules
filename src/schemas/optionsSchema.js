@@ -1,3 +1,5 @@
+// TODO: This one is outdated.
+
 export default {
   additionalProperties: false,
   properties: {
@@ -78,6 +80,9 @@ export default {
     },
     transform: {
       instanceof: 'Function',
+    },
+    uniqueName: {
+      type: 'string',
     },
     webpackHotModuleReloading: {
       oneOf: [{
