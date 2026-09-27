@@ -268,13 +268,16 @@ want to change your `.babelrc` (to add this plugin) then you'll want to add the
 
 1.  Migrate your CSS processing from [css-loader] to Webpack's [Native CSS].
 
-2.  Make sure the `generateScopedName` option of this plugin is set to a string,
+2.  Remove `getLocalIdent()` and `generateScopedNameFactory()` imports from this
+    plugin (in case you have used them).
+
+3.  Make sure the `generateScopedName` option of this plugin is set to a string,
     matching the `localIdentName` option in the Webpack's settings for CSS modules.
     It is recommended to set both explicitly,
     _e.g._ `[file]__[local]__[fullhash:base64:6]` for development,
     and `[fullhash:base64:6]` for production builds.
 
-3.  When Webpack generates hashes for the output class names, it always includes
+4.  When Webpack generates hashes for the output class names, it always includes
     `[file]` (relative to the Webpack context) and `[uniqueName]` into the hashed
     data (even if they are not a part of the `localIdentName` string). Explicitly
     set `context` and `uniqueName` options of this plugin to the values matching
