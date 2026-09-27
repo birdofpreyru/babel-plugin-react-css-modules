@@ -123,7 +123,7 @@ const getExtraPlugins = (
  *   }
  * }
  */
-const cache = {};
+let cache = {};
 
 const getTokens = (
   extraPluginsRunner: any,
@@ -198,8 +198,13 @@ export function startWorker() {
     workerTerminateId = undefined;
   }
 
-  ++workerUsers;
-  worker ??= new Worker(`${import.meta.dirname}/worker.js`);
+  if (!workerUsers++) {
+    // e.g. in testing setups there is a possibility that plugin modules are
+    // not re-loaded between different tests, and babel settings might change
+    // between those tests, thus we should reset the cache.
+    cache = {};
+    worker ??= new Worker(`${import.meta.dirname}/worker.js`);
+  }
 }
 
 export function stopWorker() {
