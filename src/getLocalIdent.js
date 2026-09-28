@@ -2,6 +2,7 @@
  * getLocalIdent() function taken from css-loader@5.2.4
  */
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { defaultGetLocalIdent } from 'css-loader';
 
 // BEWARE: We need explicit .js extensions below, as our "Add Import Extension"

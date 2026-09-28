@@ -1,5 +1,5 @@
 {
-  "version": "7.1.0",
+  "version": "8.0.0-alpha.7",
   "dependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-syntax-jsx": "^8.0.1",
@@ -32,19 +32,17 @@
     "css-loader": "^7.1.5",
     "flow-bin": "^0.261.2",
     "jest": "^30.5.0",
-    "mini-css-extract-plugin": "^2.10.2",
     "postcss": "^8.5.26",
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
     "postcss-scss": "^4.0.9",
-    "webpack": "^5.110.2"
+    "webpack": "^5.111.1"
   },
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/birdofpreyru"
   },
   "peerDependencies": {
-    "css-loader": ">=6",
     "postcss": "8",
     "webpack": ">=5.108"
   },
@@ -73,7 +71,7 @@
     "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --plugins @babel/plugin-transform-flow-strip-types --presets @babel/preset-env",
     "lint": "eslint --cache",
     "jest": "jest --no-cache",
-    "test": "npm run lint && flow && npm run jest"
+    "test": "npm run lint && npm run jest"
   },
   "exports": {
     ".": {

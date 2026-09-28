@@ -95,7 +95,24 @@ const generateScopedNameFactory = (localIdentName) => (
   ),
 );
 
+function localIdentNameFactory(localIdentName) {
+  return ({ local, module: { resource } }) => {
+    const packageInfo = getPackageInfo(path.dirname(resource));
+    const request = normalizePath(path.relative(packageInfo.root, resource));
+
+    return interpolateName({
+      resourcePath: resource,
+    }, localIdentName, {
+      content: `${packageInfo.name + request}\u0000${local}`,
+      context: packageInfo.root,
+    }).replace(/\[package\]/giu, packageInfo.name)
+      .replace(/\[local\]/giu, local)
+      .replace(/[@+/]/gu, '-');
+  };
+}
+
 export {
   generateScopedNameFactory,
   getLocalIdent,
+  localIdentNameFactory,
 };
