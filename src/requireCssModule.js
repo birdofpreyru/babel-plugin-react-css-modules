@@ -1,6 +1,10 @@
 // @flow
 
-/* global console, process */
+/* global console, clearTimeout, process, setTimeout */
+
+// TODO: Flow-bin has issues with using "node:" prefix.
+// eslint-disable-next-line import/enforce-node-protocol-usage
+import { Buffer } from 'buffer';
 
 // TODO: Flow-bin has issues with using "node:" prefix.
 // eslint-disable-next-line import/enforce-node-protocol-usage
@@ -14,6 +18,10 @@ import { createRequire } from 'module';
 // eslint-disable-next-line import/enforce-node-protocol-usage
 import { dirname, resolve } from 'path';
 
+// TODO: Flow-bin has issues with using "node:" prefix.
+// eslint-disable-next-line import/enforce-node-protocol-usage
+import { Worker } from 'worker_threads';
+
 import postcss from 'postcss';
 import ExtractImports from 'postcss-modules-extract-imports';
 import LocalByDefault from 'postcss-modules-local-by-default';
@@ -22,7 +30,6 @@ import Values from 'postcss-modules-values';
 
 import parser from '@dr.pogodin/postcss-modules-parser';
 
-import getLocalIdent, { unescape } from './getLocalIdent';
 import optionsDefaults from './schemas/optionsDefaults';
 
 import type {
@@ -53,6 +60,53 @@ type OptionsType = {|
   context?: string,
   transform?: Function
 |};
+
+const buffer = new Uint8Array(new SharedArrayBuffer(0, {
+  maxByteLength: 1024 * 1024, // 1MB.
+}));
+
+const bufferSize = new Float64Array(new SharedArrayBuffer(8));
+
+let worker;
+let workerTerminateId;
+
+/**
+ * The first-level cache = full file path + name.
+ * The object: {
+ *   compiled: boolean;
+ *   tokens: {
+ *     [local]: 'transformed';
+ *   }
+ * }
+ */
+let cache = {};
+
+function waitResult() {
+  while (!bufferSize[0]);
+  const data = Buffer.from(buffer.buffer, 0, bufferSize[0]);
+  return JSON.parse(data.toString('utf8'));
+}
+
+function ensureWorkerStarted() {
+  if (workerTerminateId || !worker) cache = {};
+
+  if (workerTerminateId) {
+    clearTimeout(workerTerminateId);
+    workerTerminateId = undefined;
+  } else if (!worker) {
+    worker = new Worker(`${import.meta.dirname}/worker.js`);
+  }
+}
+
+export function stopWorker() {
+  if (worker && !workerTerminateId) {
+    workerTerminateId = setTimeout(() => {
+      worker.terminate();
+      worker = undefined;
+      workerTerminateId = undefined;
+    }, 1000);
+  }
+}
 
 const getFiletypeOptions = (
   cssSourceFilePath: string,
@@ -125,7 +179,43 @@ const getTokens = (
     console.warn(message.text);
   });
 
-  return res.root.tokens;
+  if (typeof pluginOptions.localIdentName === 'function') {
+    return res.root.tokens;
+  }
+
+  const bucket = cache[cssSourceFilePath];
+  if (bucket.compiled) return bucket.tokens;
+
+  let css = '';
+  for (const className of Object.keys(bucket.tokens)) {
+    css += `.${className} {}\n`;
+  }
+
+  bufferSize[0] = 0;
+
+  worker.postMessage({
+    css,
+    path: cssSourceFilePath,
+    type: 'css',
+  });
+
+  const result = waitResult();
+
+  let tokens;
+
+  switch (result.type) {
+    case 'error':
+      throw Error(result.error);
+    case 'result':
+      tokens = Object.fromEntries(result.mapEntries);
+      bucket.tokens = tokens;
+      bucket.compiled = true;
+      break;
+    default:
+      throw Error('Unexpected result type');
+  }
+
+  return tokens;
 };
 
 export default (
@@ -136,47 +226,50 @@ export default (
   let runner: any;
   let generateScopedName;
 
-  if (options.generateScopedName && typeof options.generateScopedName === 'function') {
-    ({ generateScopedName } = options);
+  if (typeof options.localIdentName === 'function') {
+    generateScopedName = (
+      clazz: string,
+      resourcePath: string,
+    ) => options.localIdentName({
+      local: clazz,
+      module: { resource: resourcePath },
+    });
   } else {
-    generateScopedName = (clazz: string, resourcePath: string) => getLocalIdent(
-      // TODO: The loader context used by "css-loader" may has additional
-      // stuff inside this argument (loader context), allowing for some edge
-      // cases (though, presumably not with a typical configurations)
-      // we don't support (yet?).
-      { resourcePath },
+    ensureWorkerStarted();
 
-      options.generateScopedName || optionsDefaults.generateScopedName,
-      unescape(clazz),
-      {
-        clazz,
-        context: options.context || process.cwd(),
+    worker.postMessage({
+      additionalFileTypes: options.filetypes && Object.keys(options.filetypes),
+      buffer,
+      bufferSize,
+      context: options.context || process.cwd(),
+      localIdentName: options.localIdentName || optionsDefaults.localIdentName,
+      type: 'config',
+      uniqueName: options.uniqueName,
 
-        // TODO: These options should match their counterparts in Webpack
-        // configuration:
-        //  - https://webpack.js.org/configuration/output/#outputhashdigest
-        //  - https://webpack.js.org/configuration/output/#outputhashdigestlength
-        //  - https://webpack.js.org/configuration/output/#outputhashfunction
-        //  - https://webpack.js.org/configuration/output/#outputhashsalt
-        // and they should be exposed as babel-plugin-react-css-modules
-        // options. However, for now they are just hardcoded equal to
-        // the Webpack's default settings.
-        hashDigest: 'hex',
-        hashDigestLength: 20,
-        hashFunction: 'md4',
-        hashSalt: '',
+      // TODO: Should we also pass over the config for:
+      //  - localIdentHashFunction
+      //  - localIdentHashDigest
+      //  - localIdentHashDigestLength
+      //  - localIdentHashSalt
+      // or are we fine just relying on Webpack's defaults for them?
+    });
 
-        // TODO: This option was introduced by css-loader@6.6.0.
-        // To keep getLocalIdent() in sync with css-loader implementation,
-        // I updated the code there, but similar to the parameters above,
-        // it is not yet exposed as this plugin's option.
-        hashStrategy: 'resource-path-and-local-name',
+    generateScopedName = (localClassName: string, resourcePath: string) => {
+      let bucket = cache[resourcePath];
 
-        // TODO: This one allows for some path modifications during
-        // the transform. Probably, not a Webpack param.
-        regExp: '',
-      },
-    );
+      if (!bucket) {
+        bucket = { compiled: false, tokens: {} };
+        cache[resourcePath] = bucket;
+      }
+
+      if (bucket.compiled) {
+        if (!bucket.tokens[localClassName]) {
+          throw Error(`Compiled tokens bucket is missing "${localClassName}" class name`);
+        }
+      } else bucket.tokens[localClassName] = null;
+
+      return '.placeholder';
+    };
   }
 
   const filetypeOptions = getFiletypeOptions(

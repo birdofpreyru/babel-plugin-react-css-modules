@@ -8,7 +8,9 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
+// TODO: Double-check, if this dependency is really necessary?
 import cssesc from 'cssesc';
+
 import { interpolateName } from 'loader-utils';
 
 const require = createRequire(import.meta.url);
@@ -63,56 +65,20 @@ const getPackageInfo = (folder) => {
 
 getPackageInfo.cache = {};
 
-const getLocalIdent = (
-  { resourcePath },
-  localIdentName,
-  localName,
-  options = {},
-) => {
-  const packageInfo = getPackageInfo(path.dirname(resourcePath));
-  const request = normalizePath(path.relative(packageInfo.root, resourcePath));
-
-  return interpolateName({
-    resourcePath,
-  }, localIdentName, {
-    ...options,
-    content: `${packageInfo.name + request}\u0000${localName}`,
-    context: packageInfo.root,
-  }).replace(/\[package\]/giu, packageInfo.name)
-    .replace(/\[local\]/giu, localName)
-    .replace(/[@+/]/gu, '-');
-};
-
-const generateScopedNameFactory = (localIdentName) => (
-  localName,
-  assetPath,
-) => escapeLocalident(
-  getLocalIdent(
-    { resourcePath: assetPath },
-    localIdentName,
-    localName,
-    {},
-  ),
-);
-
 function localIdentNameFactory(localIdentName) {
   return ({ local, module: { resource } }) => {
     const packageInfo = getPackageInfo(path.dirname(resource));
     const request = normalizePath(path.relative(packageInfo.root, resource));
 
-    return interpolateName({
+    return escapeLocalident(interpolateName({
       resourcePath: resource,
     }, localIdentName, {
       content: `${packageInfo.name + request}\u0000${local}`,
       context: packageInfo.root,
     }).replace(/\[package\]/giu, packageInfo.name)
       .replace(/\[local\]/giu, local)
-      .replace(/[@+/]/gu, '-');
+      .replace(/[@+/]/gu, '-'));
   };
 }
 
-export {
-  generateScopedNameFactory,
-  getLocalIdent,
-  localIdentNameFactory,
-};
+export { localIdentNameFactory };

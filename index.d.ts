@@ -6,16 +6,23 @@ interface PostcssPluginOptionsI {}
 
 type PostcssPluginT = [string, PostcssPluginOptionsI] | string;
 
+type ArgT = {
+  local: string;
+  module: {
+    resource: string;
+  };
+};
+
 export type PluginOptionsT = {
   autoResolveMultipleImports: boolean;
+  context?: string;
 
   filetypes?: Record<`.${string}`, {
     plugins?: PostcssPluginT[];
     syntax: string;
   }>;
 
-  generateScopedName?: ((name: string, filename: string, css: string) => string)
-    | string;
-
+  localIdentName?: ((arg: ArgT) => string) | string;
   replaceImport?: boolean;
+  uniqueName?: string;
 };

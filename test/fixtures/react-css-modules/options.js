@@ -11,7 +11,7 @@ module.exports = {
     [
       resolve(__dirname, '../../../src'),
       {
-        generateScopedName: '[name]__[local]',
+        localIdentName: '[name]__[local]',
       },
     ],
   ],

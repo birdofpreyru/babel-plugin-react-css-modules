@@ -3,8 +3,8 @@ const optionsDefaults = {
     styleName: 'className',
   },
   autoResolveMultipleImports: true,
-  generateScopedName: '[path]___[name]__[local]___[hash:base64:5]',
   handleMissingStyleName: 'throw',
+  localIdentName: '[file]__[local]__[hash:base64:6]',
 };
 
 export default optionsDefaults;

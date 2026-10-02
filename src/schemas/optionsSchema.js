@@ -54,7 +54,10 @@ export default {
       },
       type: 'object',
     },
-    generateScopedName: {
+    handleMissingStyleName: {
+      enum: ['throw', 'warn', 'ignore'],
+    },
+    localIdentName: {
       oneOf: [
         {
           type: 'string',
@@ -63,9 +66,6 @@ export default {
           instanceof: 'Function',
         },
       ],
-    },
-    handleMissingStyleName: {
-      enum: ['throw', 'warn', 'ignore'],
     },
     removeImport: {
       type: 'boolean',
@@ -78,6 +78,9 @@ export default {
     },
     transform: {
       instanceof: 'Function',
+    },
+    uniqueName: {
+      type: 'string',
     },
     webpackHotModuleReloading: {
       oneOf: [{

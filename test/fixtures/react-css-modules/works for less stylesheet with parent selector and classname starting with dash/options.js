@@ -11,7 +11,7 @@ module.exports = {
             syntax: 'postcss-less',
           },
         },
-        generateScopedName: '[local]-[hash:base64:10]',
+        localIdentName: '[local]-[hash:base64:10]',
         webpackHotModuleReloading: true,
       },
     ],

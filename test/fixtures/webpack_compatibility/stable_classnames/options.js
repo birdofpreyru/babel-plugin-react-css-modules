@@ -2,11 +2,15 @@
 
 const path = require('node:path');
 
+const { localIdentNameFactory } = require('../../../../src/utils');
+
 module.exports = {
   plugins: [
     [
       path.resolve(__dirname, '../../../../src'), {
-        generateScopedName: '[path]__[local]__[hash:base64:5]',
+        localIdentName: localIdentNameFactory(
+          '[path]__[local]__[hash:base64:5]',
+        ),
       },
     ],
   ],

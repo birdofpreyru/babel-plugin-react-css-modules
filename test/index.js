@@ -78,7 +78,13 @@ function runWebpackTest({ babelOutput, cssGeneratorOps, entry }) {
           'utf8',
         );
         for (let i = 0; i < classNames.length; ++i) {
-          const name = classNames[i];
+          let name = classNames[i];
+
+          // NOTE: This unescapes CSS class name, it is to be doulbe-checked
+          // though, whether it is fine we inject unescaped names into className
+          // prop, or should we escape that.
+          name = name.replace(/\\(.)/g, '$1');
+
           if (!babelOutputJs.includes(`"${name.slice(1)}"`)) {
             throw Error(
               `Babel output:\n\n${babelOutputJs}\n\nMisses class: ${name}`,
@@ -104,24 +110,24 @@ describe('Webpack compatibility', () => {
   it(
     'compatible with `localIdentName` string',
     () => runWebpackTest({
-      babelOutput: 'css-loader_compatibility/generated_hashes/output.mjs',
+      babelOutput: 'webpack_compatibility/generated_hashes/output.mjs',
       cssGeneratorOps: {
         localIdentName: '[path]__[local]__[hash:base64:5]',
       },
-      entry: 'css-loader_compatibility/generated_hashes/style.css',
+      entry: 'webpack_compatibility/generated_hashes/style.css',
     }),
   );
 
   it(
     'compatible with the "stable" `localIdentName` function',
     () => runWebpackTest({
-      babelOutput: 'css-loader_compatibility/stable_classnames/output.mjs',
+      babelOutput: 'webpack_compatibility/stable_classnames/output.mjs',
       cssGeneratorOps: {
         localIdentName: localIdentNameFactory(
           '[path]__[local]__[hash:base64:5]',
         ),
       },
-      entry: 'css-loader_compatibility/stable_classnames/style.css',
+      entry: 'webpack_compatibility/stable_classnames/style.css',
     }),
   );
 });

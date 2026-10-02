@@ -8,7 +8,7 @@
     [
       "../../../../src",
       {
-        "generateScopedName": "[name]__[local]"
+        "localIdentName": "[name]__[local]"
       }
     ]
   ]
