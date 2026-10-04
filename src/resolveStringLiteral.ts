@@ -1,11 +1,9 @@
-// @flow
-
-import { NodePath } from '@babel/traverse';
+import type { NodePath } from '@babel/traverse';
 
 import {
+  type JSXAttribute,
   isJSXExpressionContainer,
   isStringLiteral,
-  JSXAttribute,
   stringLiteral,
 } from '@babel/types';
 
@@ -21,13 +19,13 @@ import type {
  * Updates the className value of a JSX element using a provided
  * styleName attribute.
  */
-export default (
+export function resolveStringLiteral(
   path: typeof NodePath,
   styleModuleImportMap: StyleModuleImportMapType,
-  sourceAttribute: typeof JSXAttribute,
+  sourceAttribute: JSXAttribute,
   destinationName: string,
   options: GetClassNameOptionsType,
-): void => {
+): void {
   const resolvedStyleName = getClassName(
     sourceAttribute.value.value,
     styleModuleImportMap,
@@ -59,4 +57,4 @@ export default (
     sourceAttribute.value.value = resolvedStyleName;
     /* eslint-enable no-param-reassign */
   }
-};
+}

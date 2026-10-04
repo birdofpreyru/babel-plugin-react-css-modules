@@ -1,59 +1,44 @@
-// @flow
+import { dirname, resolve } from 'node:path';
+import { URL } from 'node:url';
 
-/* global console */
-
-// TODO: Flow-bin has issues with using "node:" prefix.
-// eslint-disable-next-line import/enforce-node-protocol-usage
-import { dirname, resolve } from 'path';
-
-// eslint-disable-next-line import/enforce-node-protocol-usage
-import { URL } from 'url';
-
-import Ajv from 'ajv';
-
-import ajvKeywords from 'ajv-keywords';
+import type * as Babel from '@babel/core';
 import babelPluginJsxSyntax from '@babel/plugin-syntax-jsx';
-import { NodePath } from '@babel/traverse';
-import * as BabelTypes from '@babel/types';
+import type { NodePath } from '@babel/traverse';
+import type { Identifier, Node, Program } from '@babel/types';
 
 import attributeNameExists from './attributeNameExists';
-import createObjectExpression from './createObjectExpression';
+import { createObjectExpression } from './createObjectExpression';
 import createSpreadMapper from './createSpreadMapper';
 import handleSpreadClassName from './handleSpreadClassName';
 import replaceJsxExpressionContainer from './replaceJsxExpressionContainer';
 import requireCssModule, { stopWorker } from './requireCssModule';
-import resolveStringLiteral from './resolveStringLiteral';
-import optionsDefaults from './schemas/optionsDefaults';
-import optionsSchema from './schemas/optionsSchema';
+import { resolveStringLiteral } from './resolveStringLiteral';
+import { optionsDefaults } from './schemas/optionsDefaults';
+import { type OptionsT, optionsSchema } from './schemas/optionsSchema';
 
-const ajv = new Ajv({
-  $data: true,
-});
+type StatsT = Babel.PluginPass<OptionsT>;
 
-ajvKeywords(ajv);
-
-const validate = ajv.compile(optionsSchema);
-
-const getTargetResourcePath = (importedPath: string, stats: any) => {
-  const targetFileDirectoryPath = dirname(stats.file.opts.filename);
+const getTargetResourcePath = (importedPath: string, stats: StatsT) => {
+  const { filename } = stats.file.opts;
+  if (!filename) throw Error('Internal error');
+  const targetFileDirectoryPath = dirname(filename);
 
   if (importedPath.startsWith('.')) {
     return resolve(targetFileDirectoryPath, importedPath);
   }
 
-  // $FlowFixMe
   return new URL(import.meta.resolve(importedPath)).pathname;
 };
 
 const isFilenameExcluded = (filename: string, exclude: string) => filename.match(new RegExp(exclude, 'u'));
 
-const notForPlugin = (importedPath: string, stats: any) => {
+const notForPlugin = (importedPath: string, stats: StatsT) => {
   const extension = importedPath.lastIndexOf('.') > -1
     ? importedPath.slice(importedPath.lastIndexOf('.')) : null;
 
   if (extension !== '.css') {
     const { filetypes } = stats.opts;
-    if (!filetypes || !filetypes[extension]) return true;
+    if (extension === null || !filetypes?.[extension]) return true;
   }
 
   const filename = getTargetResourcePath(importedPath, stats);
@@ -65,51 +50,52 @@ const notForPlugin = (importedPath: string, stats: any) => {
   return false;
 };
 
+type StyleMapT = {
+  importedHelperIndentifier: Identifier;
+  styleModuleImportMap: Record<string, unknown>;
+  styleModuleImportMapIdentifier: Identifier;
+};
+
 export default ({
   types,
-}: {|
-  types: typeof BabelTypes,
-|}): { ... } => {
-  const styleMapsForFileByName: { [string]: any } = {};
-  const styleMapsForFileByPath = {};
+}: typeof Babel): Babel.PluginObject<Babel.PluginPass<OptionsT>> => {
+  const styleMapsForFileByName: Record<string, StyleMapT> = {};
+  const styleMapsForFileByPath: Record<string, Record<string, unknown>> = {};
 
   let skip = false;
 
   const setupFileForRuntimeResolution = (
-    path: typeof NodePath,
+    path: NodePath,
     filename: string,
   ) => {
-    const programPath = path.findParent((parentPath) => parentPath.isProgram());
+    const programPath = path.findParent(
+      (parentPath) => parentPath.isProgram(),
+    ) as NodePath<Program>;
 
-    styleMapsForFileByName[filename].importedHelperIndentifier = programPath.scope.generateUidIdentifier('getClassName');
-    styleMapsForFileByName[filename].styleModuleImportMapIdentifier = programPath.scope.generateUidIdentifier('styleModuleImportMap');
+    const styleMap = styleMapsForFileByName[filename];
+    if (!styleMap) throw Error('Internal error');
+
+    styleMap.importedHelperIndentifier = programPath.scope.generateUidIdentifier('getClassName');
+    styleMap.styleModuleImportMapIdentifier = programPath.scope.generateUidIdentifier('styleModuleImportMap');
 
     programPath.unshiftContainer(
       'body',
       types.importDeclaration(
-        [
-          types.importDefaultSpecifier(
-            styleMapsForFileByName[filename].importedHelperIndentifier,
-          ),
-        ],
+        [types.importDefaultSpecifier(styleMap.importedHelperIndentifier)],
         types.stringLiteral('@dr.pogodin/babel-plugin-react-css-modules/getClassName'),
       ),
     );
 
-    const firstNonImportDeclarationNode = programPath.get('body').find((node) => !types.isImportDeclaration(node));
+    const firstNonImportDeclarationNode = programPath.get('body').find((node) => !types.isImportDeclaration(node as Node));
 
+    if (!firstNonImportDeclarationNode) throw Error('Internal error');
     firstNonImportDeclarationNode.insertBefore(
       types.variableDeclaration(
         'const',
         [
           types.variableDeclarator(
-            types.cloneNode(
-              styleMapsForFileByName[filename].styleModuleImportMapIdentifier,
-            ),
-            createObjectExpression(
-              types,
-              styleMapsForFileByName[filename].styleModuleImportMap,
-            ),
+            types.cloneNode(styleMap.styleModuleImportMapIdentifier),
+            createObjectExpression(styleMap.styleModuleImportMap),
           ),
         ],
       ),
@@ -122,7 +108,7 @@ export default ({
    * @param {object} path
    */
   const addCommonJsWebpackHotModuleAccept = (
-    path: typeof NodePath,
+    path: NodePath,
     importedPath: string,
   ) => {
     const test = types.memberExpression(types.identifier('module'), types.identifier('hot'));
@@ -149,8 +135,11 @@ export default ({
     ]);
 
     const programPath = path.findParent((parentPath) => parentPath.isProgram());
+    if (programPath?.type !== 'Program') throw Error('Internal error');
 
-    const firstNonImportDeclarationNode = programPath.get('body').find((node) => !types.isImportDeclaration(node));
+    const firstNonImportDeclarationNode = programPath.get('body').find(
+      (node) => !types.isImportDeclaration(node as Node),
+    );
 
     const hotAcceptStatement = types.ifStatement(test, consequent);
 
@@ -167,7 +156,7 @@ export default ({
    * @param {object} path
    */
   const addEsmWebpackHotModuleAccept = (
-    path: typeof NodePath,
+    path: NodePath,
     importedPath: string,
   ) => {
     const test = types.memberExpression(
@@ -206,6 +195,7 @@ export default ({
     ]);
 
     const programPath = path.findParent((parentPath) => parentPath.isProgram());
+    if (programPath?.type !== 'Program') throw Error('Internal error');
 
     const firstNonImportDeclarationNode = programPath.get('body').find((node) => !types.isImportDeclaration(node));
 
@@ -222,8 +212,8 @@ export default ({
     name: string,
     importedPath: string,
     resolvedPath: string,
-    path: typeof NodePath,
-    stats: any,
+    path: NodePath,
+    stats: StatsT,
   ) => {
     const {
       file: { opts: { filename } },
@@ -232,15 +222,24 @@ export default ({
         filetypes = {},
         localIdentName,
         transform,
+        uniqueName,
       },
     } = stats;
 
-    const mapsByName = styleMapsForFileByName[filename].styleModuleImportMap;
+    if (!filename) throw Error('Missing filename');
+
+    const styleMapsForFile = styleMapsForFileByName[filename];
+    if (!styleMapsForFile) throw Error('Missing style maps for file');
+
+    const mapsByName = styleMapsForFile.styleModuleImportMap;
     let styleMap = mapsByName[name];
 
     // In case it was loaded under a different name before.
     if (!styleMap) {
-      styleMap = styleMapsForFileByPath[filename][importedPath];
+      const styleMapsByPath = styleMapsForFileByPath[filename];
+      if (!styleMapsByPath) throw Error('Missing style maps for file');
+
+      styleMap = styleMapsByPath[importedPath];
       mapsByName[name] = styleMap;
     }
 
@@ -251,9 +250,14 @@ export default ({
         filetypes,
         localIdentName,
         transform,
+        uniqueName,
       });
       mapsByName[name] = styleMap;
-      styleMapsForFileByPath[filename][importedPath] = styleMap;
+
+      const styleMapsByPath = styleMapsForFileByPath[filename];
+      if (!styleMapsByPath) throw Error('Missing style maps bucket');
+
+      styleMapsByPath[importedPath] = styleMap;
 
       const { replaceImport, webpackHotModuleReloading } = stats.opts;
 
@@ -278,10 +282,10 @@ export default ({
     },
     visitor: {
       // const styles = require('./styles.css');
-      CallExpression(path: typeof NodePath, stats: any): void {
+      CallExpression(path, stats) {
         try {
-          const { arguments: args, callee: { name: calleeName } } = path.node;
-          if (skip || calleeName !== 'require' || !args.length
+          const { arguments: args, callee } = path.node;
+          if (skip || !('name' in callee) || callee.name !== 'require' || !args.length
             || !types.isStringLiteral(args[0])) return;
 
           const importedPath = args[0].value;
@@ -289,9 +293,13 @@ export default ({
 
           const targetResourcePath = getTargetResourcePath(importedPath, stats);
 
-          const isAssigned = path.parentPath.type === 'VariableDeclarator';
-          const styleImportName: string = isAssigned
-            ? path.parentPath.node.id.name : importedPath;
+          let styleImportName: string;
+          if (path.parentPath.type === 'VariableDeclarator') {
+            if (path.parentPath.node.id.type !== 'Identifier') {
+              throw Error('Unexpected ID type');
+            }
+            styleImportName = path.parentPath.node.id.name;
+          } else styleImportName = importedPath;
 
           const styleMap = loadStyleMap(
             styleImportName,
@@ -321,7 +329,7 @@ export default ({
       // import * as styles from './style.css';
       // import { className } from './style.css';
       // import Style, { className } from './style.css';
-      ImportDeclaration(path: typeof NodePath, stats: any): void {
+      ImportDeclaration(path, stats): void {
         try {
           const importedPath = path.node.source.value;
           if (skip || notForPlugin(importedPath, stats)) return;
@@ -429,13 +437,14 @@ export default ({
         }
       },
 
-      JSXElement(path: typeof NodePath, stats: any): void {
+      JSXElement(path, stats) {
         try {
           if (skip) {
             return;
           }
 
           const { filename } = stats.file.opts;
+          if (!filename) throw Error('Missing filename');
 
           if (
             stats.opts.exclude
@@ -444,7 +453,7 @@ export default ({
 
           let { attributeNames } = optionsDefaults;
 
-          if (stats.opts && stats.opts.attributeNames) {
+          if (stats.opts.attributeNames) {
             attributeNames = {
               ...attributeNames,
               ...stats.opts.attributeNames,
@@ -452,7 +461,15 @@ export default ({
           }
 
           const attributes = path.node.openingElement.attributes
-            .filter((attribute) => typeof attribute.name !== 'undefined' && typeof attributeNames[attribute.name.name] === 'string');
+            .filter((attribute) => {
+              if (!('name' in attribute)) return false;
+
+              if (typeof attribute.name.name !== 'string') {
+                throw Error('Internal error');
+              }
+
+              return typeof attributeNames[attribute.name.name] === 'string';
+            });
 
           if (attributes.length === 0) {
             return;
@@ -515,14 +532,9 @@ export default ({
         }
       },
 
-      Program(path: typeof NodePath, stats: any): void {
+      Program(path, stats): void {
         try {
-          if (!validate(stats.opts)) {
-            // eslint-disable-next-line no-console
-            console.error(validate.errors);
-
-            throw new Error('Invalid configuration');
-          }
+          optionsSchema.parse(stats.opts);
 
           const { filename } = stats.file.opts;
 

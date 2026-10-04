@@ -1,5 +1,3 @@
-// @flow
-
 import { NodePath } from '@babel/traverse';
 
 import {

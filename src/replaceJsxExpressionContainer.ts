@@ -1,5 +1,3 @@
-// @flow
-
 import * as BabelTypes from '@babel/types';
 
 import {

@@ -8,30 +8,50 @@ import { dirname } from 'node:path';
 import { parentPort } from 'node:worker_threads';
 
 import { Volume, createFsFromVolume } from 'memfs';
-import webpack from 'webpack';
+
+import webpack, {
+  type Compiler,
+  type InputFileSystem,
+  type Module,
+  type OutputFileSystem,
+} from 'webpack';
 
 const fs = createFsFromVolume(new Volume());
 
 // These are settings of the current compiler instance.
-let context;
-let localIdentName;
+let context: string | undefined;
+let localIdentName: string | undefined;
 let filetypes = '\\.css';
-let uniqueName;
+let uniqueName: string | undefined;
 
 // Webpack compiler instance.
-let compiler;
+let compiler: Compiler | undefined;
 
 // Shared buffers for backward communication with the parent thread
 // (we can't use the normal inter-thread messaging, as the parent thread
 // has to wait for the result by blocking itself inside synchronous code).
-let buffer;
-let bufferSize;
+let buffer: Uint8Array<SharedArrayBuffer> | undefined;
+let bufferSize: Float64Array;
+
+type ErrorResultT = {
+  error: string;
+  type: 'error';
+};
+
+type SuccessResultT = {
+  mapEntries: Array<[string, string]>;
+  type: 'result';
+};
+
+export type ResultT = ErrorResultT | SuccessResultT;
 
 /**
  * Posts `result` to the master thread via the shared `buffer` and `bufferSize`
  * buffers.
  */
-function postResult(result) {
+function postResult(result: ResultT) {
+  if (!buffer) throw Error('Missing communication');
+
   const data = Buffer.from(JSON.stringify(result));
   if (data.length > buffer.buffer.byteLength) {
     buffer.buffer.grow(data.length);
@@ -40,7 +60,17 @@ function postResult(result) {
   bufferSize[0] = data.length;
 }
 
-function onConfig(message) {
+type ConfigMessageT = {
+  additionalFileTypes: Array<`.${string}`> | undefined;
+  buffer: Uint8Array<SharedArrayBuffer>;
+  bufferSize: Float64Array;
+  context: string;
+  localIdentName: string;
+  type: 'config';
+  uniqueName: string | undefined;
+};
+
+function onConfig(message: ConfigMessageT) {
   ({ buffer, bufferSize } = message);
 
   const newFileTypes = [
@@ -84,28 +114,40 @@ function onConfig(message) {
       },
     });
 
-    compiler.inputFileSystem = fs;
-    compiler.outputFileSystem = fs;
+    compiler.inputFileSystem = fs as InputFileSystem;
+    compiler.outputFileSystem = fs as OutputFileSystem;
   }
 }
 
-function onCss({ css, path }) {
+type CssMessageT = {
+  css: string;
+  path: string;
+  type: 'css';
+};
+
+function onCss({ css, path }: CssMessageT) {
+  if (!compiler) throw Error('Missing compiler');
+
   fs.mkdirSync(dirname(path), { recursive: true });
   fs.writeFileSync(path, css);
   fs.writeFileSync('/index.js', `import * as S from '${path}';console.log(S)`);
 
   compiler.run((error, stats) => {
     try {
-      if (error || stats.hasErrors()) {
+      if (error || stats?.hasErrors()) {
         postResult({
-          error: error || stats.toJson().errors,
+          error: error ?? stats?.toJson().errors,
           type: 'error',
         });
       } else {
-        const cssModule = stats.compilation.modules.find(
-          (m) => m.type === 'css/module',
+        // TODO: Optimise it later, we should look-up the module using
+        // stats?.compilation.findModule().
+        const modules = Array.from<Module>(
+          ...stats?.compilation.modules ?? [],
         );
-        const result = cssModule?.buildInfo?.cssData?.exports;
+        const cssModule = modules.find((m) => m.type === 'css/module');
+        const result = (cssModule?.buildInfo?.cssData as object | undefined)
+          ?.exports as Map<string, string> | undefined;
 
         postResult({
           mapEntries: Array.from(result?.entries()),
@@ -118,10 +160,16 @@ function onCss({ css, path }) {
   });
 }
 
-parentPort.on('message', (message) => {
+type MessageT = ConfigMessageT | CssMessageT;
+
+parentPort!.on('message', (message: MessageT) => {
   switch (message.type) {
-    case 'config': return onConfig(message);
-    case 'css': return onCss(message);
-    default: throw Error(`Unexpected message type "${message.type}"`);
+    case 'config':
+      onConfig(message);
+      break;
+    case 'css':
+      onCss(message);
+      break;
+    default: throw Error('Unexpected message type');
   }
 });

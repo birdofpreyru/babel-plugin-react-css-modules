@@ -5,37 +5,40 @@
     "@babel/plugin-syntax-jsx": "^8.0.1",
     "@babel/traverse": "^8.0.0",
     "@babel/types": "^8.0.0",
-    "@dr.pogodin/postcss-modules-parser": "^1.3.4",
-    "ajv": "^8.20.0",
-    "ajv-keywords": "^5.0.0",
+    "@dr.pogodin/postcss-modules-parser": "^1.4.0",
     "cssesc": "^3.0.0",
     "loader-utils": "^3.3.1",
     "memfs": "^4.79.0",
     "postcss-modules-extract-imports": "^3.1.0",
     "postcss-modules-local-by-default": "^4.2.0",
     "postcss-modules-scope": "^3.2.1",
-    "postcss-modules-values": "^4.0.0"
+    "postcss-modules-values": "^4.0.0",
+    "zod": "^4.6.5"
   },
   "description": "Transforms styleName to className using compile time CSS module resolution.",
   "devDependencies": {
     "@babel/cli": "^8.0.4",
     "@babel/helper-plugin-test-runner": "^8.0.0",
-    "@babel/plugin-transform-flow-strip-types": "^8.0.1",
     "@babel/preset-env": "^8.0.2",
     "@babel/register": "^8.0.1",
     "@dr.pogodin/babel-plugin-add-import-extension": "^3.0.2",
     "@dr.pogodin/eslint-configs": "^0.3.6",
     "@tsconfig/recommended": "^1.0.13",
+    "@types/cssesc": "^3.0.2",
+    "@types/loader-utils": "^3.0.0",
+    "@types/postcss-modules-extract-imports": "^3.0.5",
+    "@types/postcss-modules-local-by-default": "^4.0.2",
+    "@types/postcss-modules-scope": "^3.0.4",
+    "@types/postcss-modules-values": "^4.0.2",
     "babel-jest": "^30.5.0",
     "babel-plugin-external-helpers": "npm:@babel/plugin-external-helpers@^8.0.1",
     "babel-plugin-module-resolver": "^5.0.3",
-    "babel-plugin-transform-import-meta": "^3.0.0",
-    "flow-bin": "^0.261.2",
     "jest": "^30.5.0",
     "postcss": "^8.5.26",
     "postcss-less": "^6.0.0",
     "postcss-nested": "^7.0.2",
     "postcss-scss": "^4.0.9",
+    "typescript": "^6.0.3",
     "webpack": "^5.111.1"
   },
   "funding": {
@@ -66,12 +69,13 @@
     "url": "https://github.com/birdofpreyru/babel-plugin-react-css-modules/issues"
   },
   "scripts": {
-    "build": "rm -fr ./dist && NODE_ENV=production babel ./src --config-file ./babel.module.config.mjs --out-dir ./dist --source-maps --copy-files && npm run build-helper",
-    "build-helper": "mkdir -p ./dist/browser && NODE_ENV=production babel ./src/getClassName.js --out-file ./dist/browser/getClassName.js --source-maps --no-babelrc --plugins @babel/plugin-transform-flow-strip-types --presets @babel/preset-env  && npm run build-schema-helper",
-    "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --plugins @babel/plugin-transform-flow-strip-types --presets @babel/preset-env",
+    "build:old": "rm -fr ./dist && NODE_ENV=production babel ./src --config-file ./babel.module.config.mjs --out-dir ./dist --source-maps --copy-files && npm run build-helper",
+    "build-helper": "mkdir -p ./dist/browser && NODE_ENV=production babel ./src/getClassName.js --out-file ./dist/browser/getClassName.js --source-maps --no-babelrc --presets @babel/preset-env  && npm run build-schema-helper",
+    "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --presets @babel/preset-env",
     "lint": "eslint --cache",
     "jest": "jest --no-cache",
-    "test": "npm run lint && npm run jest"
+    "test": "npm run lint && npm run typecheck && npm run jest",
+    "typecheck": "tsc --noEmit"
   },
   "exports": {
     ".": {

@@ -1,6 +1,4 @@
-// @flow
-
-import { NodePath } from '@babel/traverse';
+import type { NodePath } from '@babel/traverse';
 
 import optionsDefaults from './schemas/optionsDefaults';
 

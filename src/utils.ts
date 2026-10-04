@@ -11,7 +11,10 @@ import path from 'node:path';
 // TODO: Double-check, if this dependency is really necessary?
 import cssesc from 'cssesc';
 
-import { interpolateName } from 'loader-utils';
+import { type LoaderInterpolateOption, interpolateName } from 'loader-utils';
+import type { LoaderContext } from 'webpack';
+
+import type { LocalIdentNameFunctionT } from './types';
 
 const require = createRequire(import.meta.url);
 
@@ -22,14 +25,14 @@ const require = createRequire(import.meta.url);
  * @param {string} file
  * @returns {string}
  */
-const normalizePath = (file) => (path.sep === '\\' ? file.replace(/\\/gu, '/') : file);
+const normalizePath = (file: string) => (path.sep === '\\' ? file.replace(/\\/gu, '/') : file);
 
 const filenameReservedRegex = /["*/:<>?\\|]/gu;
 
 // eslint-disable-next-line no-control-regex
 const reControlChars = /[\u0000-\u001F\u0080-\u009F]/gu;
 
-const escapeLocalident = (localident) => cssesc(
+const escapeLocalident = (localident: string) => cssesc(
   localident
   // For `[hash]` placeholder
     .replace(/^((-?\d)|--)/u, '_$1')
@@ -38,6 +41,13 @@ const escapeLocalident = (localident) => cssesc(
     .replace(/\./gu, '-'),
   { isIdentifier: true },
 );
+
+type PackageInfoT = {
+  name: string;
+  root: string;
+};
+
+const packageInfoCache: Record<string, PackageInfoT> = {};
 
 /**
  * Returns the name of package containing the folder; i.e. it recursively looks
@@ -48,31 +58,32 @@ const escapeLocalident = (localident) => cssesc(
  * @param {string} folder
  * @returns {string}
  */
-const getPackageInfo = (folder) => {
-  let res = getPackageInfo.cache[folder];
+const getPackageInfo = (folder: string): PackageInfoT => {
+  // TODO: Use Node's findPackageJSON()!
+  let res = packageInfoCache[folder];
   if (!res) {
     const pp = path.resolve(folder, 'package.json');
     res = fs.existsSync(pp) ? {
       // eslint-disable-next-line import/no-dynamic-require
-      name: require(pp).name,
+      name: (require(pp) as { name: string }).name,
       root: folder,
     } : getPackageInfo(path.resolve(folder, '..'));
-    getPackageInfo.cache[folder] = res;
+    packageInfoCache[folder] = res;
   }
 
   return res;
 };
 
-getPackageInfo.cache = {};
-
-function localIdentNameFactory(localIdentName) {
+function localIdentNameFactory(
+  localIdentName: string,
+): LocalIdentNameFunctionT {
   return ({ local, module: { resource } }) => {
     const packageInfo = getPackageInfo(path.dirname(resource));
     const request = normalizePath(path.relative(packageInfo.root, resource));
 
     return escapeLocalident(interpolateName({
       resourcePath: resource,
-    }, localIdentName, {
+    } as LoaderContext<LoaderInterpolateOption>, localIdentName, {
       content: `${packageInfo.name + request}\u0000${local}`,
       context: packageInfo.root,
     }).replace(/\[package\]/giu, packageInfo.name)

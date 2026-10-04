@@ -1,4 +1,6 @@
-const optionsDefaults = {
+import type { OptionsT } from './optionsSchema';
+
+export const optionsDefaults: OptionsT = {
   attributeNames: {
     styleName: 'className',
   },
@@ -6,5 +8,3 @@ const optionsDefaults = {
   handleMissingStyleName: 'throw',
   localIdentName: '[file]__[local]__[hash:base64:6]',
 };
-
-export default optionsDefaults;

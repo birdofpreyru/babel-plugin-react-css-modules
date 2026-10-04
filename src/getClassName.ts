@@ -1,5 +1,3 @@
-// @flow
-
 /* global console */
 
 import optionsDefaults from './schemas/optionsDefaults';
