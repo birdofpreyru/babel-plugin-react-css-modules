@@ -1,33 +1,39 @@
-import * as BabelTypes from '@babel/types';
+import type { NodePath } from '@babel/core';
 
 import {
+  type ArgumentPlaceholder,
+  type Expression,
+  type Identifier,
+  type JSXAttribute,
+  type SpreadElement,
+  callExpression,
+  clone,
   binaryExpression,
-  Identifier,
   isJSXExpressionContainer,
   isStringLiteral,
   jsxAttribute,
-  JSXAttribute,
   jsxExpressionContainer,
   jsxIdentifier,
+  stringLiteral,
+  type JSXElement,
 } from '@babel/types';
 
-import conditionalClassMerge from './conditionalClassMerge';
-import createObjectExpression from './createObjectExpression';
-import optionsDefaults from './schemas/optionsDefaults';
+import { conditionalClassMerge } from './conditionalClassMerge';
+import { createObjectExpression } from './createObjectExpression';
+import { optionsDefaults } from './schemas/optionsDefaults';
 import type { GetClassNameOptionsType } from './types';
 
-export default (
-  types: typeof BabelTypes,
-  path: Object,
-  sourceAttribute: typeof JSXAttribute,
+export function replaceJsxExpressionContainer(
+  path: NodePath<JSXElement>,
+  sourceAttribute: JSXAttribute,
   destinationName: string,
-  importedHelperIndentifier: typeof Identifier,
-  styleModuleImportMapIdentifier: typeof Identifier,
+  importedHelperIndentifier: Identifier,
+  styleModuleImportMapIdentifier: Identifier,
   options: GetClassNameOptionsType,
-): void => {
+): void {
   const expressionContainerValue = sourceAttribute.value;
   const destinationAttribute = path.node.openingElement.attributes
-    .find((attribute) => typeof attribute.name !== 'undefined' && attribute.name.name === destinationName);
+    .find((attribute) => 'name' in attribute && attribute.name.name === destinationName);
 
   if (destinationAttribute) {
     path.node.openingElement.attributes.splice(
@@ -41,7 +47,19 @@ export default (
     1,
   );
 
-  const args = [
+  if (!expressionContainerValue) {
+    throw Error('Missing experession container value');
+  }
+
+  if (!('expression' in expressionContainerValue)) {
+    throw Error('Unexpected expression container value kind');
+  }
+
+  if (expressionContainerValue.expression.type === 'JSXEmptyExpression') {
+    throw Error('Unexpected empty expression');
+  }
+
+  const args: Array<ArgumentPlaceholder | Expression | SpreadElement> = [
     expressionContainerValue.expression,
     styleModuleImportMapIdentifier,
   ];
@@ -53,27 +71,38 @@ export default (
     || options.autoResolveMultipleImports
     !== optionsDefaults.autoResolveMultipleImports
   ) {
-    args.push(createObjectExpression(types, options));
+    args.push(createObjectExpression(options));
   }
 
-  const styleNameExpression = types.callExpression(
-    types.clone(importedHelperIndentifier),
+  // _arguments: (Expression | SpreadElement | ArgumentPlaceholder)[]
+
+  const styleNameExpression = callExpression(
+    clone(importedHelperIndentifier),
     args,
   );
 
   if (destinationAttribute) {
-    if (isStringLiteral(destinationAttribute.value)) {
+    if (
+      'value' in destinationAttribute
+      && isStringLiteral(destinationAttribute.value)
+    ) {
       path.node.openingElement.attributes.push(jsxAttribute(
         jsxIdentifier(destinationName),
         jsxExpressionContainer(
           binaryExpression(
             '+',
-            types.stringLiteral(`${destinationAttribute.value.value} `),
+            stringLiteral(`${destinationAttribute.value.value} `),
             styleNameExpression,
           ),
         ),
       ));
-    } else if (isJSXExpressionContainer(destinationAttribute.value)) {
+    } else if (
+      'value' in destinationAttribute
+      && isJSXExpressionContainer(destinationAttribute.value)
+    ) {
+      if (destinationAttribute.value.expression.type === 'JSXEmptyExpression') {
+        throw Error('Unexpected destination attribute value expression type');
+      }
       path.node.openingElement.attributes.push(jsxAttribute(
         jsxIdentifier(destinationName),
         jsxExpressionContainer(
@@ -84,7 +113,12 @@ export default (
         ),
       ));
     } else {
-      throw new Error(`Unexpected attribute value: ${destinationAttribute.value}`);
+      throw new Error(`Unexpected attribute value: ${
+        'value' in destinationAttribute && destinationAttribute.value
+
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          ? destinationAttribute.value.toString() : ''
+      }`);
     }
   } else {
     path.node.openingElement.attributes.push(jsxAttribute(
@@ -94,4 +128,4 @@ export default (
       ),
     ));
   }
-};
+}

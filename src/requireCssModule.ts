@@ -23,7 +23,7 @@ import Values from 'postcss-modules-values';
 
 import parser from '@dr.pogodin/postcss-modules-parser';
 
-import optionsDefaults from './schemas/optionsDefaults';
+import { optionsDefaults } from './schemas/optionsDefaults';
 import type { OptionsT } from './schemas/optionsSchema';
 import type { LocalIdentNameFunctionT, StyleModuleMapType } from './types';
 import type { ResultT } from './worker';

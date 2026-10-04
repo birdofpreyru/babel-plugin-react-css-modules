@@ -6,17 +6,16 @@ import babelPluginJsxSyntax from '@babel/plugin-syntax-jsx';
 import type { NodePath } from '@babel/traverse';
 import type { Identifier, Node, Program } from '@babel/types';
 
-import attributeNameExists from './attributeNameExists';
+import { attributeNameExists } from './attributeNameExists';
 import { createObjectExpression } from './createObjectExpression';
-import createSpreadMapper from './createSpreadMapper';
-import handleSpreadClassName from './handleSpreadClassName';
-import replaceJsxExpressionContainer from './replaceJsxExpressionContainer';
+import { createSpreadMapper } from './createSpreadMapper';
+import { handleSpreadClassName } from './handleSpreadClassName';
+import { replaceJsxExpressionContainer } from './replaceJsxExpressionContainer';
 import requireCssModule, { stopWorker } from './requireCssModule';
 import { resolveStringLiteral } from './resolveStringLiteral';
 import { optionsDefaults } from './schemas/optionsDefaults';
 import { type OptionsT, optionsSchema } from './schemas/optionsSchema';
-
-type StatsT = Babel.PluginPass<OptionsT>;
+import type { StatsT, StyleModuleMapType } from './types';
 
 const getTargetResourcePath = (importedPath: string, stats: StatsT) => {
   const { filename } = stats.file.opts;
@@ -51,16 +50,18 @@ const notForPlugin = (importedPath: string, stats: StatsT) => {
 };
 
 type StyleMapT = {
-  importedHelperIndentifier: Identifier;
-  styleModuleImportMap: Record<string, unknown>;
-  styleModuleImportMapIdentifier: Identifier;
+  importedHelperIndentifier?: Identifier;
+  styleModuleImportMap: Record<string, StyleModuleMapType>;
+  styleModuleImportMapIdentifier?: Identifier;
 };
 
 export default ({
   types,
 }: typeof Babel): Babel.PluginObject<Babel.PluginPass<OptionsT>> => {
   const styleMapsForFileByName: Record<string, StyleMapT> = {};
-  const styleMapsForFileByPath: Record<string, Record<string, unknown>> = {};
+
+  const styleMapsForFileByPath:
+  Record<string, Record<string, StyleModuleMapType>> = {};
 
   let skip = false;
 
@@ -197,7 +198,8 @@ export default ({
     const programPath = path.findParent((parentPath) => parentPath.isProgram());
     if (programPath?.type !== 'Program') throw Error('Internal error');
 
-    const firstNonImportDeclarationNode = programPath.get('body').find((node) => !types.isImportDeclaration(node));
+    const firstNonImportDeclarationNode = programPath.get('body')
+      .find((node) => !types.isImportDeclaration(node as Node));
 
     const hotAcceptStatement = types.ifStatement(test, consequent);
 
@@ -214,7 +216,7 @@ export default ({
     resolvedPath: string,
     path: NodePath,
     stats: StatsT,
-  ) => {
+  ): StyleModuleMapType => {
     const {
       file: { opts: { filename } },
       opts: {
@@ -232,7 +234,7 @@ export default ({
     if (!styleMapsForFile) throw Error('Missing style maps for file');
 
     const mapsByName = styleMapsForFile.styleModuleImportMap;
-    let styleMap = mapsByName[name];
+    let styleMap: StyleModuleMapType | undefined = mapsByName[name];
 
     // In case it was loaded under a different name before.
     if (!styleMap) {
@@ -240,7 +242,7 @@ export default ({
       if (!styleMapsByPath) throw Error('Missing style maps for file');
 
       styleMap = styleMapsByPath[importedPath];
-      mapsByName[name] = styleMap;
+      if (styleMap) mapsByName[name] = styleMap;
     }
 
     // Loading a map for the first time.
@@ -293,13 +295,19 @@ export default ({
 
           const targetResourcePath = getTargetResourcePath(importedPath, stats);
 
+          let isAssigned: boolean;
           let styleImportName: string;
           if (path.parentPath.type === 'VariableDeclarator') {
             if (path.parentPath.node.id.type !== 'Identifier') {
               throw Error('Unexpected ID type');
             }
+
+            isAssigned = true;
             styleImportName = path.parentPath.node.id.name;
-          } else styleImportName = importedPath;
+          } else {
+            isAssigned = false;
+            styleImportName = importedPath;
+          }
 
           const styleMap = loadStyleMap(
             styleImportName,
@@ -312,7 +320,7 @@ export default ({
           if (stats.opts.replaceImport) {
             if (isAssigned) {
               path.replaceWith(
-                createObjectExpression(types, styleMap),
+                createObjectExpression(styleMap),
               );
             } else path.remove();
           } else if (stats.opts.removeImport) {
@@ -336,7 +344,7 @@ export default ({
 
           const targetResourcePath = getTargetResourcePath(importedPath, stats);
 
-          let styleImportName: string;
+          let styleImportName: string | undefined;
           const { specifiers } = path.node;
 
           const guardStyleImportNameIsNotSet = () => {
@@ -350,8 +358,7 @@ export default ({
             }
           };
 
-          for (let i = 0; i < specifiers.length; ++i) {
-            const specifier = specifiers[i];
+          for (const specifier of specifiers) {
             switch (specifier.type) {
               // import Style from './style.css';
               case 'ImportDefaultSpecifier':
@@ -382,7 +389,7 @@ export default ({
 
           // Fallback for anonymous style import:
           // import './style.css';
-          if (styleImportName === undefined) styleImportName = importedPath;
+          styleImportName ??= importedPath;
 
           const styleMap = loadStyleMap(
             styleImportName,
@@ -395,19 +402,22 @@ export default ({
           if (stats.opts.replaceImport) {
             const variables = [];
 
-            for (let i = 0; i < specifiers.length; ++i) {
-              const specifier = specifiers[i];
+            for (const specifier of specifiers) {
               switch (specifier.type) {
                 case 'ImportDefaultSpecifier':
                 case 'ImportNamespaceSpecifier':
                   variables.push(
                     types.variableDeclarator(
                       types.identifier(specifier.local.name),
-                      createObjectExpression(types, styleMap),
+                      createObjectExpression(styleMap),
                     ),
                   );
                   break;
                 case 'ImportSpecifier': {
+                  if (specifier.imported.type !== 'Identifier') {
+                    throw Error('Unexpected specifier kind');
+                  }
+
                   const value = styleMap[specifier.imported.name];
                   variables.push(
                     types.variableDeclarator(
@@ -451,7 +461,8 @@ export default ({
             && isFilenameExcluded(filename, stats.opts.exclude)
           ) return;
 
-          let { attributeNames } = optionsDefaults;
+          let attributeNames: OptionsT['attributeNames']
+            = optionsDefaults.attributeNames;
 
           if (stats.opts.attributeNames) {
             attributeNames = {
@@ -479,12 +490,19 @@ export default ({
             autoResolveMultipleImports
               = optionsDefaults.autoResolveMultipleImports,
             handleMissingStyleName = optionsDefaults.handleMissingStyleName,
-          } = stats.opts || {};
+          } = stats.opts;
 
           const spreadMap = createSpreadMapper(path, stats);
 
           attributes.forEach((attribute) => {
+            if (!('name' in attribute)) throw Error('Internal error');
+
+            if (typeof attribute.name.name !== 'string') {
+              throw Error('Internal error');
+            }
+
             const destinationName = attributeNames[attribute.name.name];
+            if (!destinationName) throw Error('Missing destination name');
 
             const options = {
               autoResolveMultipleImports,
@@ -494,31 +512,40 @@ export default ({
             if (types.isStringLiteral(attribute.value)) {
               resolveStringLiteral(
                 path,
-                styleMapsForFileByName[filename].styleModuleImportMap,
+                styleMapsForFileByName[filename]!.styleModuleImportMap,
                 attribute,
                 destinationName,
                 options,
               );
             } else if (types.isJSXExpressionContainer(attribute.value)) {
-              if (!styleMapsForFileByName[filename].importedHelperIndentifier) {
+              const styleMapsByName = styleMapsForFileByName[filename];
+              if (!styleMapsByName) throw Error('Missing style maps bucket');
+
+              if (!styleMapsByName.importedHelperIndentifier) {
                 setupFileForRuntimeResolution(path, filename);
               }
 
+              // TODO: Because these are set up by the setupFileForRuntimeResolution()
+              // call above... perhaps we can refactor code for the typing to figure
+              // it out automatically (now it is a side effect, not tracked by TS).
+              if (
+                !styleMapsByName.importedHelperIndentifier
+                || !styleMapsByName.styleModuleImportMapIdentifier
+              ) {
+                throw Error('Internal error');
+              }
+
               replaceJsxExpressionContainer(
-                types,
                 path,
                 attribute,
                 destinationName,
-                styleMapsForFileByName[filename].importedHelperIndentifier,
-                types.cloneNode(
-                  styleMapsForFileByName[filename]
-                    .styleModuleImportMapIdentifier,
-                ),
+                styleMapsByName.importedHelperIndentifier,
+                types.cloneNode(styleMapsByName.styleModuleImportMapIdentifier),
                 options,
               );
             }
 
-            if (spreadMap[destinationName]) {
+            if (typeof destinationName === 'string' && spreadMap[destinationName]) {
               handleSpreadClassName(
                 path,
                 destinationName,
@@ -537,6 +564,7 @@ export default ({
           optionsSchema.parse(stats.opts);
 
           const { filename } = stats.file.opts;
+          if (!filename) throw Error('Missing filename');
 
           styleMapsForFileByName[filename] = {
             styleModuleImportMap: {},

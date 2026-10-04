@@ -134,28 +134,35 @@ function onCss({ css, path }: CssMessageT) {
 
   compiler.run((error, stats) => {
     try {
-      if (error || stats?.hasErrors()) {
+      if (error) {
+        postResult({ error: error.message, type: 'error' });
+      } else if (stats?.hasErrors()) {
         postResult({
-          error: error ?? stats?.toJson().errors,
+          error: stats.toJson().errors!
+            .map((item) => item.message)
+            .join('; '),
           type: 'error',
         });
       } else {
-        // TODO: Optimise it later, we should look-up the module using
-        // stats?.compilation.findModule().
         const modules = Array.from<Module>(
+          // @ts-expect-error "TODO: Correct it later - we should stats?.compilation.findModule() to get the module!"
           ...stats?.compilation.modules ?? [],
         );
         const cssModule = modules.find((m) => m.type === 'css/module');
-        const result = (cssModule?.buildInfo?.cssData as object | undefined)
-          ?.exports as Map<string, string> | undefined;
+        const result = (cssModule?.buildInfo?.cssData as {
+          exports: Map<string, string>;
+        } | undefined)?.exports;
 
         postResult({
-          mapEntries: Array.from(result?.entries()),
+          mapEntries: Array.from(result?.entries() ?? []),
           type: 'result',
         });
       }
     } catch (e) {
-      postResult({ error: e, type: 'error' });
+      postResult({
+        error: e instanceof Error ? e.message : 'Unknown error',
+        type: 'error',
+      });
     }
   });
 }

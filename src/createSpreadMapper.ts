@@ -1,8 +1,8 @@
-import { NodePath } from '@babel/traverse';
+import type { NodePath } from '@babel/traverse';
 
 import {
+  type Expression,
   cloneNode,
-  // type Expression,
   memberExpression,
   binaryExpression,
   conditionalExpression,
@@ -12,17 +12,20 @@ import {
   isJSXSpreadAttribute,
 } from '@babel/types';
 
-import optionsDefaults from './schemas/optionsDefaults';
+import { optionsDefaults } from './schemas/optionsDefaults';
+import type { OptionsT } from './schemas/optionsSchema';
+import type { StatsT } from './types';
 
-const createSpreadMapper = (path: typeof NodePath, stats: any): {
-  [destinationName: string]: typeof memberExpression, // TODO: It should be Expression type from '@babel/types', but I am not sure now, how to express it for flow.
-  ...
-} => {
-  const result = {};
+/** Map: destination name > member expression. */
+type ResT = Record<string, Expression>;
 
-  let { attributeNames } = optionsDefaults;
+export function createSpreadMapper(path: NodePath, stats: StatsT): ResT {
+  const result: ResT = {};
 
-  if (stats.opts && stats.opts.attributeNames) {
+  let attributeNames: OptionsT['attributeNames']
+    = optionsDefaults.attributeNames;
+
+  if (stats.opts.attributeNames) {
     attributeNames = { ...attributeNames, ...stats.opts.attributeNames };
   }
 
@@ -32,12 +35,15 @@ const createSpreadMapper = (path: typeof NodePath, stats: any): {
 
   const attributeKeys = attributes.map((pair) => pair[0]);
 
+  if (!('openingElement' in path.node)) throw Error('Unexpected node type');
+
   const spreadAttributes = path.node.openingElement.attributes
     .filter((attribute) => isJSXSpreadAttribute(attribute));
 
-  spreadAttributes.forEach((spread) => {
-    attributeKeys.forEach((attributeKey) => {
+  for (const spread of spreadAttributes) {
+    for (const attributeKey of attributeKeys) {
       const destinationName = attributeNames[attributeKey];
+      if (!destinationName) throw Error('Missing destination name');
 
       if (result[destinationName]) {
         result[destinationName] = binaryExpression(
@@ -74,10 +80,8 @@ const createSpreadMapper = (path: typeof NodePath, stats: any): {
           stringLiteral(''),
         );
       }
-    });
-  });
+    }
+  }
 
   return result;
-};
-
-export default createSpreadMapper;
+}

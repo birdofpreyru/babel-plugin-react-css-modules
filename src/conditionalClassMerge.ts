@@ -1,23 +1,26 @@
 import {
+  type Expression,
   binaryExpression,
   cloneNode,
   conditionalExpression,
   stringLiteral,
 } from '@babel/types';
 
-export default (
-  classNameExpression: any,
-  styleNameExpression: any,
-): any => binaryExpression(
-  '+',
-  conditionalExpression(
-    cloneNode(classNameExpression),
-    binaryExpression(
-      '+',
+export function conditionalClassMerge(
+  classNameExpression: Expression,
+  styleNameExpression: Expression,
+): Expression {
+  return binaryExpression(
+    '+',
+    conditionalExpression(
       cloneNode(classNameExpression),
-      stringLiteral(' '),
+      binaryExpression(
+        '+',
+        cloneNode(classNameExpression),
+        stringLiteral(' '),
+      ),
+      stringLiteral(''),
     ),
-    stringLiteral(''),
-  ),
-  cloneNode(styleNameExpression),
-);
+    cloneNode(styleNameExpression),
+  );
+}

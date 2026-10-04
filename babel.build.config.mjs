@@ -1,5 +1,5 @@
 export default {
   plugins: ['@dr.pogodin/add-import-extension'],
-  presets: ['@babel/env'],
+  presets: ['@babel/env', '@babel/typescript'],
   targets: 'maintained node versions',
 };

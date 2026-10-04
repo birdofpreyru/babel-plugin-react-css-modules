@@ -1,6 +1,16 @@
 import { z } from 'zod';
 
-import { localIdentNameFunctionSchema } from '../types';
+export const compilationInfoSchema = z.object({
+  local: z.string(),
+  module: z.object({
+    resource: z.string(),
+  }),
+});
+
+export const localIdentNameFunctionSchema = z.function({
+  input: [compilationInfoSchema],
+  output: z.string(),
+});
 
 const pluginSchema = z.union([
   z.string(),
@@ -13,13 +23,7 @@ const fileTypeSchema = z.strictObject({
 });
 
 export const optionsSchema = z.strictObject({
-  attributeNames: {
-    additionalProperties: false,
-    patternProperties: z.record(
-      z.string(),
-      z.union(z.string(), z.null()),
-    ),
-  },
+  attributeNames: z.record(z.string(), z.union([z.string(), z.null()])),
   autoResolveMultipleImports: z.boolean(),
   context: z.string(),
   exclude: z.string(),

@@ -1,6 +1,4 @@
-/* global console */
-
-import optionsDefaults from './schemas/optionsDefaults';
+import { optionsDefaults } from './schemas/optionsDefaults';
 
 import type {
   StyleModuleMapType,
@@ -25,18 +23,25 @@ const handleError = (
   return null;
 };
 
-const getClassNameForNamespacedStyleName = (
+function getClassNameForNamespacedStyleName(
   styleName: string,
   styleModuleImportMap: StyleModuleImportMapType,
   handleMissingStyleNameOption?: HandleMissingStyleNameOptionType,
-): ?string => {
+): null | string {
   // Note:
   // Do not use the desctructing syntax with Babel.
   // Desctructing adds _slicedToArray helper.
   const styleNameParts = styleName.split('.');
+
+  if (styleNameParts.length !== 2) {
+    throw Error('Unexpected style name parts number');
+  }
+
   const [importName, moduleName] = styleNameParts;
+  if (importName === undefined) throw Error('Missing import name');
+
   const handleMissingStyleName = handleMissingStyleNameOption
-    || optionsDefaults.handleMissingStyleName;
+    ?? optionsDefaults.handleMissingStyleName;
 
   if (!moduleName) {
     return handleError(`Invalid style name: ${styleName}`, handleMissingStyleName);
@@ -51,18 +56,19 @@ const getClassNameForNamespacedStyleName = (
   }
 
   return styleModuleImportMap[importName][moduleName];
-};
+}
 
-const getClassNameFromMultipleImports = (
+function getClassNameFromMultipleImports(
   styleName: string,
   styleModuleImportMap: StyleModuleImportMapType,
   handleMissingStyleNameOption?: HandleMissingStyleNameOptionType,
-): ?string => {
+): null | string {
   const handleMissingStyleName = handleMissingStyleNameOption
-    || optionsDefaults.handleMissingStyleName;
+    ?? optionsDefaults.handleMissingStyleName;
 
   const importKeysWithMatches = Object.keys(styleModuleImportMap)
-    .map((importKey) => styleModuleImportMap[importKey][styleName] && importKey)
+    .map((importKey) => styleModuleImportMap[importKey]![styleName]
+      && importKey)
     .filter((importKey) => importKey);
 
   if (importKeysWithMatches.length > 1) {
@@ -78,8 +84,10 @@ const getClassNameFromMultipleImports = (
     return handleError(`Could not resolve the styleName '${styleName}'.`, handleMissingStyleName);
   }
 
-  return styleModuleImportMap[importKeysWithMatches[0]][styleName];
-};
+  const [key] = importKeysWithMatches;
+  if (key === undefined) throw Error('Missing key');
+  return styleModuleImportMap[key]![styleName] ?? null;
+}
 
 export default (
   styleNameValue: string,
@@ -91,7 +99,7 @@ export default (
   const {
     autoResolveMultipleImports = optionsDefaults.autoResolveMultipleImports,
     handleMissingStyleName = optionsDefaults.handleMissingStyleName,
-  } = options || {};
+  } = options ?? {};
 
   if (!styleNameValue) {
     return '';
@@ -127,8 +135,13 @@ export default (
         );
       }
 
-      const styleModuleMap: StyleModuleMapType
-        = styleModuleImportMap[styleModuleImportMapKeys[0]];
+      const [key] = styleModuleImportMapKeys;
+      if (key === undefined) throw Error('Missing key');
+
+      const styleModuleMap: StyleModuleMapType | undefined
+        = styleModuleImportMap[key];
+
+      if (!styleModuleMap) throw Error('Missing style module map');
 
       if (!styleModuleMap[styleName]) {
         return handleError(`Could not resolve the styleName '${styleName}' in ${styleModuleImportMapKeys[0]}.`, handleMissingStyleName);

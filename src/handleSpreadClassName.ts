@@ -1,8 +1,9 @@
 import type { NodePath } from '@babel/traverse';
 
 import {
+  type Expression,
+  type JSXElement,
   cloneNode,
-  // type Expression,
   isStringLiteral,
   isJSXExpressionContainer,
   jsxExpressionContainer,
@@ -10,19 +11,24 @@ import {
   stringLiteral,
 } from '@babel/types';
 
-const handleSpreadClassName = (
-  path: typeof NodePath,
+export function handleSpreadClassName(
+  path: NodePath<JSXElement>,
   destinationName: string,
-  classNamesFromSpread: typeof binaryExpression, // TODO: It should be Expression type from '@babel/types', but I am not sure now, how to express it for flow.
-) => {
-  const destinationAttribute = path.node.openingElement.attributes
-    .find((attribute) => typeof attribute.name !== 'undefined' && attribute.name.name === destinationName);
+  classNamesFromSpread: Expression,
+): void {
+  const destinationAttribute = path.node.openingElement.attributes.find(
+    (attribute) => 'name' in attribute
+      && attribute.name.name === destinationName,
+  );
 
   if (!destinationAttribute) {
     return;
   }
 
-  if (isStringLiteral(destinationAttribute.value)) {
+  if (
+    'value' in destinationAttribute
+    && isStringLiteral(destinationAttribute.value)
+  ) {
     destinationAttribute.value = jsxExpressionContainer(
       binaryExpression(
         '+',
@@ -34,7 +40,13 @@ const handleSpreadClassName = (
         ),
       ),
     );
-  } else if (isJSXExpressionContainer(destinationAttribute.value)) {
+  } else if (
+    'value' in destinationAttribute
+    && isJSXExpressionContainer(destinationAttribute.value)
+  ) {
+    if (destinationAttribute.value.expression.type === 'JSXEmptyExpression') {
+      throw Error('Unexpected destination attribute value expression');
+    }
     destinationAttribute.value = jsxExpressionContainer(
       binaryExpression(
         '+',
@@ -47,6 +59,4 @@ const handleSpreadClassName = (
       ),
     );
   }
-};
-
-export default handleSpreadClassName;
+}
