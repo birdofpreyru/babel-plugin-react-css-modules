@@ -7,7 +7,9 @@ install-and-test: &install-and-test
       key: node-modules-{{ checksum "package-lock.json" }}
       paths:
         - node_modules
-  - run: npm test
+  - run: |
+      npm run build
+      npm test
 
 version: 2.1
 jobs:
@@ -34,7 +36,6 @@ jobs:
           condition: true
           steps:
             *install-and-test
-      - run: npm run build
       - run: |
           export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud": "npm:registry.npmjs.org"}')
           npm publish --access public --tag v8-alpha

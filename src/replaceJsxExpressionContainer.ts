@@ -20,7 +20,7 @@ import {
 
 import { conditionalClassMerge } from './conditionalClassMerge';
 import { createObjectExpression } from './createObjectExpression';
-import { optionsDefaults } from './schemas/optionsDefaults';
+import { optionsDefaults } from './optionsDefaults';
 import type { GetClassNameOptionsType } from './types';
 
 export function replaceJsxExpressionContainer(

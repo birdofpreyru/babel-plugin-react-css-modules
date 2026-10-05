@@ -12,8 +12,8 @@ import {
   isJSXSpreadAttribute,
 } from '@babel/types';
 
-import { optionsDefaults } from './schemas/optionsDefaults';
-import type { OptionsT } from './schemas/optionsSchema';
+import { optionsDefaults } from './optionsDefaults';
+import type { OptionsT } from './optionsSchema';
 import type { StatsT } from './types';
 
 /** Map: destination name > member expression. */

@@ -78,6 +78,9 @@ function localIdentNameFactory(
   localIdentName: string,
 ): LocalIdentNameFunctionT {
   return ({ local, module: { resource } }) => {
+    if (!local) throw Error('Missing local class name');
+    if (!resource) throw Error('Missing resource path');
+
     const packageInfo = getPackageInfo(path.dirname(resource));
     const request = normalizePath(path.relative(packageInfo.root, resource));
 

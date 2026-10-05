@@ -1,4 +1,4 @@
-import { optionsDefaults } from './schemas/optionsDefaults';
+import { optionsDefaults } from './optionsDefaults';
 
 import type {
   StyleModuleMapType,

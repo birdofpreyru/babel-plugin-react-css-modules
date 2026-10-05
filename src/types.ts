@@ -6,7 +6,7 @@ import type {
   OptionsT,
   compilationInfoSchema,
   localIdentNameFunctionSchema,
-} from './schemas/optionsSchema';
+} from './optionsSchema';
 
 export type StyleModuleMapType = Record<string, string>;
 

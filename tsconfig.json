@@ -10,9 +10,6 @@
     "moduleResolution": "bundler",
     "noUncheckedIndexedAccess": true,
     "outDir": "build",
-    "paths": {
-      "*": ["./*"]
-    },
     "rootDir": ".",
     "types": ["node"],
     "verbatimModuleSyntax": true

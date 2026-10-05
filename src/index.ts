@@ -10,11 +10,11 @@ import { attributeNameExists } from './attributeNameExists';
 import { createObjectExpression } from './createObjectExpression';
 import { createSpreadMapper } from './createSpreadMapper';
 import { handleSpreadClassName } from './handleSpreadClassName';
+import { optionsDefaults } from './optionsDefaults';
+import { type OptionsT, optionsSchema } from './optionsSchema';
 import { replaceJsxExpressionContainer } from './replaceJsxExpressionContainer';
 import requireCssModule, { stopWorker } from './requireCssModule';
 import { resolveStringLiteral } from './resolveStringLiteral';
-import { optionsDefaults } from './schemas/optionsDefaults';
-import { type OptionsT, optionsSchema } from './schemas/optionsSchema';
 import type { StatsT, StyleModuleMapType } from './types';
 
 const getTargetResourcePath = (importedPath: string, stats: StatsT) => {

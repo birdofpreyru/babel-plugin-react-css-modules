@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 export const compilationInfoSchema = z.object({
-  local: z.string(),
+  local: z.string().optional(),
   module: z.object({
-    resource: z.string(),
+    resource: z.string().optional(),
   }),
 });
 

@@ -15,7 +15,7 @@ export default {
   modulePathIgnorePatterns: [
     '/test/fixtures/',
   ],
-  testRegex: './test/.+\\.js$',
+  testRegex: './test/.+\\.ts$',
   transform: {
     '\\.[jt]sx?$': 'babel-jest',
   },

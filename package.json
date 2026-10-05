@@ -23,6 +23,7 @@
     "@babel/register": "^8.0.1",
     "@dr.pogodin/babel-plugin-add-import-extension": "^3.0.2",
     "@dr.pogodin/eslint-configs": "^0.3.6",
+    "@jest/globals": "^30.5.2",
     "@tsconfig/recommended": "^1.0.13",
     "@types/cssesc": "^3.0.2",
     "@types/loader-utils": "^3.0.0",
@@ -70,10 +71,10 @@
     "url": "https://github.com/birdofpreyru/babel-plugin-react-css-modules/issues"
   },
   "scripts": {
-    "build": "rm -rf ./build && NODE_ENV=production babel ./src --config-file ./babel.build.config.mjs --out-dir ./build --source-maps -x .ts",
-    "build:old": "rm -fr ./dist && NODE_ENV=production babel ./src --config-file ./babel.module.config.mjs --out-dir ./dist --source-maps --copy-files && npm run build-helper",
-    "build-helper": "mkdir -p ./dist/browser && NODE_ENV=production babel ./src/getClassName.js --out-file ./dist/browser/getClassName.js --source-maps --no-babelrc --presets @babel/preset-env  && npm run build-schema-helper",
-    "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --presets @babel/preset-env",
+    "build": "rm -rf ./build && npm run build:node && npm run build:browser && npm run build:types",
+    "build:browser": "NODE_ENV=production babel ./src/getClassName.ts ./src/optionsDefaults.ts --config-file ./babel.build.browser.config.mjs --out-dir ./build/browser --source-maps -x .ts",
+    "build:node": "NODE_ENV=production babel ./src --config-file ./babel.build.config.mjs --out-dir ./build --source-maps -x .ts",
+    "build:types": "tsc --project tsconfig.types.json",
     "lint": "eslint --cache",
     "jest": "jest --no-cache",
     "test": "npm run lint && npm run typecheck && npm run jest",
@@ -81,13 +82,13 @@
   },
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./build/index.d.ts",
+      "default": "./build/index.js"
     },
-    "./getClassName": "./dist/browser/getClassName.js",
+    "./getClassName": "./build/browser/getClassName.js",
     "./utils": {
-      "types": "./utils.d.ts",
-      "default": "./dist/utils.js"
+      "types": "./build/utils.d.ts",
+      "default": "./build/utils.js"
     }
   },
   "type": "module"
