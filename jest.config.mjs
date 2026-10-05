@@ -6,6 +6,7 @@ const modulesToTransform = [
   'import-meta-resolve',
   'js-tokens',
   'obug',
+  'verkit',
 ];
 
 export default {

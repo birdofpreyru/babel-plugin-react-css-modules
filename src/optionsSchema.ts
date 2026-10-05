@@ -3,7 +3,9 @@ import { z } from 'zod';
 export const compilationInfoSchema = z.object({
   local: z.string().optional(),
   module: z.object({
+    id: z.union([z.number(), z.string()]).nullish(),
     resource: z.string().optional(),
+    type: z.string().optional(),
   }),
 });
 
