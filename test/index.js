@@ -6,7 +6,7 @@ import path from 'node:path';
 import webpack from 'webpack';
 import runner from '@babel/helper-plugin-test-runner';
 
-import { localIdentNameFactory } from '../src/utils';
+import { localIdentNameFactory } from '../build/utils';
 
 /**
  * Creates Webpack compiler instance, providing it with all configs we need

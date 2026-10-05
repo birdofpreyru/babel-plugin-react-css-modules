@@ -33,6 +33,7 @@
     "babel-jest": "^30.5.0",
     "babel-plugin-external-helpers": "npm:@babel/plugin-external-helpers@^8.0.1",
     "babel-plugin-module-resolver": "^5.0.3",
+    "babel-plugin-transform-import-meta": "^3.0.0",
     "jest": "^30.5.0",
     "postcss": "^8.5.26",
     "postcss-less": "^6.0.0",
@@ -69,11 +70,12 @@
     "url": "https://github.com/birdofpreyru/babel-plugin-react-css-modules/issues"
   },
   "scripts": {
+    "build": "rm -rf ./build && NODE_ENV=production babel ./src --config-file ./babel.build.config.mjs --out-dir ./build --source-maps -x .ts",
     "build:old": "rm -fr ./dist && NODE_ENV=production babel ./src --config-file ./babel.module.config.mjs --out-dir ./dist --source-maps --copy-files && npm run build-helper",
     "build-helper": "mkdir -p ./dist/browser && NODE_ENV=production babel ./src/getClassName.js --out-file ./dist/browser/getClassName.js --source-maps --no-babelrc --presets @babel/preset-env  && npm run build-schema-helper",
     "build-schema-helper": "mkdir -p ./dist/browser/schemas && NODE_ENV=production babel ./src/schemas/optionsDefaults.js --out-file ./dist/browser/schemas/optionsDefaults.js --source-maps --no-babelrc --presets @babel/preset-env",
     "lint": "eslint --cache",
-    "jest": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --no-cache",
+    "jest": "jest --no-cache",
     "test": "npm run lint && npm run typecheck && npm run jest",
     "typecheck": "tsc --noEmit"
   },

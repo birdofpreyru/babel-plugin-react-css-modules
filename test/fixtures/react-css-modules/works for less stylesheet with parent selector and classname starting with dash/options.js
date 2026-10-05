@@ -3,7 +3,7 @@
 module.exports = {
   plugins: [
     [
-      '../../../../src',
+      '../../../../build',
       {
         filetypes: {
           '.less': {

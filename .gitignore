@@ -1,3 +1,5 @@
+__coverage__
+/build/
 coverage
 dist
 node_modules

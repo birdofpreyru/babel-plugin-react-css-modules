@@ -2,12 +2,12 @@
 
 const path = require('node:path');
 
-const { localIdentNameFactory } = require('../../../../src/utils');
+const { localIdentNameFactory } = require('../../../../build/utils');
 
 module.exports = {
   plugins: [
     [
-      path.resolve(__dirname, '../../../../src'), {
+      path.resolve(__dirname, '../../../../build'), {
         localIdentName: localIdentNameFactory(
           '[path]__[local]__[hash:base64:5]',
         ),

@@ -80,7 +80,12 @@ function ensureWorkerStarted() {
     workerTerminateId = undefined;
   }
 
-  worker ??= new Worker(`${import.meta.dirname}/worker.js`);
+  if (!worker) {
+    worker = new Worker(`${import.meta.dirname}/worker.js`);
+
+    // eslint-disable-next-line no-console
+    worker.on('error', console.error);
+  }
 }
 
 export function stopWorker(): void {
@@ -195,6 +200,9 @@ const getTokens = (
 
   switch (result.type) {
     case 'error':
+      // eslint-disable-next-line no-console
+      console.error('Worker failure:', result.error);
+
       throw Error(result.error);
     case 'result':
       tokens = Object.fromEntries(result.mapEntries);

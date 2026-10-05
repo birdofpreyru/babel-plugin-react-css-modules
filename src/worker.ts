@@ -60,6 +60,14 @@ function postResult(result: ResultT) {
   bufferSize[0] = data.length;
 }
 
+function postError(error: unknown) {
+  postResult({
+    error: error instanceof Error
+      ? `${error.message}\n${error.stack}` : 'Unknown error',
+    type: 'error',
+  });
+}
+
 type ConfigMessageT = {
   additionalFileTypes: Array<`.${string}`> | undefined;
   buffer: Uint8Array<SharedArrayBuffer>;
@@ -134,9 +142,8 @@ function onCss({ css, path }: CssMessageT) {
 
   compiler.run((error, stats) => {
     try {
-      if (error) {
-        postResult({ error: error.message, type: 'error' });
-      } else if (stats?.hasErrors()) {
+      if (error) postError(error);
+      else if (stats?.hasErrors()) {
         postResult({
           error: stats.toJson().errors!
             .map((item) => item.message)
@@ -145,8 +152,7 @@ function onCss({ css, path }: CssMessageT) {
         });
       } else {
         const modules = Array.from<Module>(
-          // @ts-expect-error "TODO: Correct it later - we should stats?.compilation.findModule() to get the module!"
-          ...stats?.compilation.modules ?? [],
+          stats?.compilation.modules.values() ?? [],
         );
         const cssModule = modules.find((m) => m.type === 'css/module');
         const result = (cssModule?.buildInfo?.cssData as {
@@ -159,10 +165,7 @@ function onCss({ css, path }: CssMessageT) {
         });
       }
     } catch (e) {
-      postResult({
-        error: e instanceof Error ? e.message : 'Unknown error',
-        type: 'error',
-      });
+      postError(e);
     }
   });
 }

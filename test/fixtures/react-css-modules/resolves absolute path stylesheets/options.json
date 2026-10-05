@@ -6,7 +6,7 @@
       }
     }],
     [
-      "../../../../src",
+      "../../../../build",
       {
         "localIdentName": "[name]__[local]"
       }

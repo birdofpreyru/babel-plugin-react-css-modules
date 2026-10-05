@@ -9,7 +9,7 @@ const { resolve } = require('node:path');
 module.exports = {
   plugins: [
     [
-      resolve(__dirname, '../../../src'),
+      resolve(__dirname, '../../../build'),
       {
         localIdentName: '[name]__[local]',
       },

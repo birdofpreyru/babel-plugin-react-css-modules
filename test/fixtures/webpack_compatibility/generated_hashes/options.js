@@ -5,7 +5,7 @@ const path = require('node:path');
 module.exports = {
   plugins: [
     [
-      path.resolve(__dirname, '../../../../src'), {
+      path.resolve(__dirname, '../../../../build'), {
         localIdentName: '[path]__[local]__[hash:base64:5]',
       },
     ],
