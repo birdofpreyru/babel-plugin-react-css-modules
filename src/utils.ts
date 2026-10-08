@@ -11,6 +11,8 @@ import path from 'node:path';
 // TODO: Double-check, if this dependency is really necessary?
 import cssesc from 'cssesc';
 
+// TODO: loader-utils repo is achived, and does not support all placeholders
+// supported by modern Webpack (e.g. no [file]).
 import { type LoaderInterpolateOption, interpolateName } from 'loader-utils';
 import type { LoaderContext } from 'webpack';
 
@@ -84,6 +86,7 @@ function localIdentNameFactory(
     const packageInfo = getPackageInfo(path.dirname(resource));
     const request = normalizePath(path.relative(packageInfo.root, resource));
 
+    // TODO: interpolateName() does not support [file]?
     return escapeLocalident(interpolateName({
       resourcePath: resource,
     } as LoaderContext<LoaderInterpolateOption>, localIdentName, {

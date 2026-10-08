@@ -17,6 +17,8 @@ import requireCssModule, { stopWorker } from './requireCssModule';
 import { resolveStringLiteral } from './resolveStringLiteral';
 import type { StatsT, StyleModuleMapType } from './types';
 
+export type { OptionsT as PluginOptionsT };
+
 const getTargetResourcePath = (importedPath: string, stats: StatsT) => {
   const { filename } = stats.file.opts;
   if (!filename) throw Error('Internal error');
