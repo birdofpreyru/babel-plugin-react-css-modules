@@ -9,9 +9,9 @@ const { resolve } = require('node:path');
 module.exports = {
   plugins: [
     [
-      resolve(__dirname, '../../../src'),
+      resolve(__dirname, '../../../build'),
       {
-        generateScopedName: '[name]__[local]',
+        localIdentName: '[name]__[local]',
       },
     ],
   ],

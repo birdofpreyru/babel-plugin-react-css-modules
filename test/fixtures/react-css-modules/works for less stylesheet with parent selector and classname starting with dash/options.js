@@ -3,7 +3,7 @@
 module.exports = {
   plugins: [
     [
-      '../../../../src',
+      '../../../../build',
       {
         filetypes: {
           '.less': {
@@ -11,8 +11,7 @@ module.exports = {
             syntax: 'postcss-less',
           },
         },
-        generateScopedName: '[local]-[hash:base64:10]',
-        webpackHotModuleReloading: true,
+        localIdentName: '[local]-[hash:base64:10]',
       },
     ],
   ],

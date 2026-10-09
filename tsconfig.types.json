@@ -1,17 +1,18 @@
 {
   "extends": "@tsconfig/recommended",
+  "include": ["src"],
   "compilerOptions": {
     "declaration": true,
+    "emitDeclarationOnly": true,
     "jsx": "react-jsx",
     "lib": [
-      "ES2024.SharedMemory",
+      "ES2024.SharedMemory"
     ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noUncheckedIndexedAccess": true,
     "outDir": "build",
-    "rootDir": ".",
-    "types": ["node"],
+    "rootDir": "./src",
     "verbatimModuleSyntax": true
   }
 }

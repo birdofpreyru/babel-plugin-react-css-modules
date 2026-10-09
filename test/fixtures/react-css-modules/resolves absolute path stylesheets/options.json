@@ -6,9 +6,9 @@
       }
     }],
     [
-      "../../../../src",
+      "../../../../build",
       {
-        "generateScopedName": "[name]__[local]"
+        "localIdentName": "[name]__[local]"
       }
     ]
   ]

@@ -1,0 +1,155 @@
+import { optionsDefaults } from './optionsDefaults';
+
+import type {
+  StyleModuleMapType,
+  StyleModuleImportMapType,
+  HandleMissingStyleNameOptionType,
+  GetClassNameOptionsType,
+} from './types';
+
+const isNamespacedStyleName = (styleName: string): boolean => styleName.includes('.');
+
+const handleError = (
+  message: string,
+  handleMissingStyleName: HandleMissingStyleNameOptionType,
+): null => {
+  if (handleMissingStyleName === 'throw') {
+    throw new Error(message);
+  } else if (handleMissingStyleName === 'warn') {
+    // eslint-disable-next-line no-console
+    console.warn(message);
+  }
+
+  return null;
+};
+
+function getClassNameForNamespacedStyleName(
+  styleName: string,
+  styleModuleImportMap: StyleModuleImportMapType,
+  handleMissingStyleNameOption?: HandleMissingStyleNameOptionType,
+): null | string {
+  // Note:
+  // Do not use the desctructing syntax with Babel.
+  // Desctructing adds _slicedToArray helper.
+  const styleNameParts = styleName.split('.');
+
+  if (styleNameParts.length !== 2) {
+    throw Error('Unexpected style name parts number');
+  }
+
+  const [importName, moduleName] = styleNameParts;
+  if (importName === undefined) throw Error('Missing import name');
+
+  const handleMissingStyleName = handleMissingStyleNameOption
+    ?? optionsDefaults.handleMissingStyleName;
+
+  if (!moduleName) {
+    return handleError(`Invalid style name: ${styleName}`, handleMissingStyleName);
+  }
+
+  if (!styleModuleImportMap[importName]) {
+    return handleError(`CSS module import does not exist: ${importName}`, handleMissingStyleName);
+  }
+
+  if (!styleModuleImportMap[importName][moduleName]) {
+    return handleError(`CSS module does not exist: ${moduleName}`, handleMissingStyleName);
+  }
+
+  return styleModuleImportMap[importName][moduleName];
+}
+
+function getClassNameFromMultipleImports(
+  styleName: string,
+  styleModuleImportMap: StyleModuleImportMapType,
+  handleMissingStyleNameOption?: HandleMissingStyleNameOptionType,
+): null | string {
+  const handleMissingStyleName = handleMissingStyleNameOption
+    ?? optionsDefaults.handleMissingStyleName;
+
+  const importKeysWithMatches = Object.keys(styleModuleImportMap)
+    .map((importKey) => styleModuleImportMap[importKey]![styleName]
+      && importKey)
+    .filter((importKey) => importKey);
+
+  if (importKeysWithMatches.length > 1) {
+    throw new Error(`Cannot resolve styleName "${styleName}" because it is present in multiple imports:`
+      + `\n\n\t${importKeysWithMatches.join('\n\t')
+      }\n\nYou can resolve this by using a named import, e.g:`
+      + `\n\n\timport foo from "${importKeysWithMatches[0]}";`
+      + `\n\t<div styleName="foo.${styleName}" />`
+      + '\n\n');
+  }
+
+  if (importKeysWithMatches.length === 0) {
+    return handleError(`Could not resolve the styleName '${styleName}'.`, handleMissingStyleName);
+  }
+
+  const [key] = importKeysWithMatches;
+  if (key === undefined) throw Error('Missing key');
+  return styleModuleImportMap[key]![styleName] ?? null;
+}
+
+export default (
+  styleNameValue: string,
+  styleModuleImportMap: StyleModuleImportMapType,
+  options?: GetClassNameOptionsType,
+): string => {
+  const styleModuleImportMapKeys = Object.keys(styleModuleImportMap);
+
+  const {
+    autoResolveMultipleImports = optionsDefaults.autoResolveMultipleImports,
+    handleMissingStyleName = optionsDefaults.handleMissingStyleName,
+  } = options ?? {};
+
+  if (!styleNameValue) {
+    return '';
+  }
+
+  return styleNameValue
+    .split(' ')
+    .filter((styleName) => styleName)
+    .map((styleName) => {
+      if (isNamespacedStyleName(styleName)) {
+        return getClassNameForNamespacedStyleName(
+          styleName,
+          styleModuleImportMap,
+          handleMissingStyleName,
+        );
+      }
+
+      if (styleModuleImportMapKeys.length === 0) {
+        throw new Error(`Cannot use styleName attribute for style name '${styleName
+        }' without importing at least one stylesheet.`);
+      }
+
+      if (styleModuleImportMapKeys.length > 1) {
+        if (!autoResolveMultipleImports) {
+          throw new Error(`Cannot use anonymous style name '${styleName
+          }' with more than one stylesheet import without setting 'autoResolveMultipleImports' to true.`);
+        }
+
+        return getClassNameFromMultipleImports(
+          styleName,
+          styleModuleImportMap,
+          handleMissingStyleName,
+        );
+      }
+
+      const [key] = styleModuleImportMapKeys;
+      if (key === undefined) throw Error('Missing key');
+
+      const styleModuleMap: StyleModuleMapType | undefined
+        = styleModuleImportMap[key];
+
+      if (!styleModuleMap) throw Error('Missing style module map');
+
+      if (!styleModuleMap[styleName]) {
+        return handleError(`Could not resolve the styleName '${styleName}' in ${styleModuleImportMapKeys[0]}.`, handleMissingStyleName);
+      }
+
+      return styleModuleMap[styleName];
+    })
+    // Remove any styles which could not be found (if handleMissingStyleName === 'ignore')
+    .filter((className) => className)
+    .join(' ');
+};

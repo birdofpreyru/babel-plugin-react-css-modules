@@ -2,9 +2,9 @@
   "sourceType": "script",
   "plugins": [
     [
-      "../../../../src",
+      "../../../../build",
       {
-        "generateScopedName": "[name]__[local]",
+        "localIdentName": "[name]__[local]",
         "attributeNames": {
           "styleName": null
         }

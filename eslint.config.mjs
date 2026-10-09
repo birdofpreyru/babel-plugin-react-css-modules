@@ -5,7 +5,7 @@ import eslintConfigs from '@dr.pogodin/eslint-configs';
 
 export default defineConfig([
   { ignores: [
-    'dist/',
+    'build/',
     'test/fixtures/**/input.js',
     'test/fixtures/**/output.{js,mjs}',
   ] },
