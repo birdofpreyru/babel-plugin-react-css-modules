@@ -259,12 +259,13 @@ The plugin works the same with `require('./style.css')` CSS imports.
 
   - Alternatively, this plugin provides a simplified, stable implementation
     for `getLocalIdent` function (taken from a selected old version of
-    [css-loader]). It resolves CSS file paths (for `[file]`, `[path]`, _etc._
-    placeholders, and inside hashes) relative to the closest `package.json`
-    file; it does not factor `uniqueName` into the hash, and it supports
-    an additional `package` placeholder, which is substituded by the `name`
-    value from the closest `package.json` &mdash; all these come handy for
-    compilation of libraries.
+    [css-loader]). It only supports class name placeholders supported by
+    the [interpolateName()](https://github.com/webpack/loader-utils#interpolatename)
+    function of `loader-utils`, but it resolves CSS file paths relative to
+    the closest `package.json` file, it does not factor `uniqueName` into the hash,
+    and it supports an additional `package` placeholder, which is substituded by
+    the `name` value from the closest `package.json` &mdash; these come handy
+    for compilation of libraries.
 
     You can use this `getLocalIdent` function (its factory, to be precise) like
     this: 
@@ -277,7 +278,7 @@ The plugin works the same with `require('./style.css')` CSS imports.
       module: {
         generator: {
           'css/module': {
-            localIdentName: localIdentNameFactory('fullhash:base64:6'),
+            localIdentName: localIdentNameFactory('[fullhash:base64:6]'),
           },
         },
       },
@@ -291,7 +292,7 @@ The plugin works the same with `require('./style.css')` CSS imports.
     export {
       plugins: [
         ["@dr.pogodin/react-css-modules", {
-          localIdentName: localIdentNameFactory('fullhash:base64:6'),
+          localIdentName: localIdentNameFactory('[fullhash:base64:6]'),
           // NOTE: No need for `context` and `uniqueName` settings here.
         }]
       ]

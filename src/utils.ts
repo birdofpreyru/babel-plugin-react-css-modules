@@ -86,7 +86,6 @@ function localIdentNameFactory(
     const packageInfo = getPackageInfo(path.dirname(resource));
     const request = normalizePath(path.relative(packageInfo.root, resource));
 
-    // TODO: interpolateName() does not support [file]?
     return escapeLocalident(interpolateName({
       resourcePath: resource,
     } as LoaderContext<LoaderInterpolateOption>, localIdentName, {
