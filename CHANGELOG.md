@@ -7,6 +7,8 @@
 - `getLocalIdent()` and `generateScopedNameFactory()` exports are removed
   in favor of the new `localIdentNameFactory()` export.
 
+- Removed `removeImport` and `webpackHotModuleReloading` options.
+
 ## Older Releases
 
 See at the [GitHub Releases Page].

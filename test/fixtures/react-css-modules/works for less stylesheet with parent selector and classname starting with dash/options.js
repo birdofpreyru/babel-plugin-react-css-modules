@@ -12,7 +12,6 @@ module.exports = {
           },
         },
         localIdentName: '[local]-[hash:base64:10]',
-        webpackHotModuleReloading: true,
       },
     ],
   ],

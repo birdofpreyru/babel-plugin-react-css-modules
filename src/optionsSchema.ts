@@ -37,9 +37,6 @@ export const optionsSchema = z.strictObject({
     localIdentNameFunctionSchema,
   ]),
 
-  /** @deprecated */
-  removeImport: z.boolean(),
-
   replaceImport: z.boolean(),
   skip: z.boolean(),
   transform: z.function({
@@ -51,7 +48,6 @@ export const optionsSchema = z.strictObject({
     output: z.string(),
   }),
   uniqueName: z.string(),
-  webpackHotModuleReloading: z.union([z.boolean(), z.enum(['commonjs'])]),
 }).partial();
 
 export type OptionsT = z.infer<typeof optionsSchema>;

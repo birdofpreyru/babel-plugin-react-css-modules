@@ -105,113 +105,6 @@ export default ({
     );
   };
 
-  /**
-   * Adds Webpack "hot module accept" code "a-la CommonJS" style,
-   * i.e. using module.hot.
-   * @param {object} path
-   */
-  const addCommonJsWebpackHotModuleAccept = (
-    path: NodePath,
-    importedPath: string,
-  ) => {
-    const test = types.memberExpression(types.identifier('module'), types.identifier('hot'));
-    const consequent = types.blockStatement([
-      types.expressionStatement(
-        types.callExpression(
-          types.memberExpression(
-            types.memberExpression(types.identifier('module'), types.identifier('hot')),
-            types.identifier('accept'),
-          ),
-          [
-            types.stringLiteral(importedPath),
-            types.functionExpression(null, [], types.blockStatement([
-              types.expressionStatement(
-                types.callExpression(
-                  types.identifier('require'),
-                  [types.stringLiteral(importedPath)],
-                ),
-              ),
-            ])),
-          ],
-        ),
-      ),
-    ]);
-
-    const programPath = path.findParent((parentPath) => parentPath.isProgram());
-    if (programPath?.type !== 'Program') throw Error('Internal error');
-
-    const firstNonImportDeclarationNode = programPath.get('body').find(
-      (node) => !types.isImportDeclaration(node as Node),
-    );
-
-    const hotAcceptStatement = types.ifStatement(test, consequent);
-
-    if (firstNonImportDeclarationNode) {
-      firstNonImportDeclarationNode.insertBefore(hotAcceptStatement);
-    } else {
-      programPath.pushContainer('body', hotAcceptStatement);
-    }
-  };
-
-  /**
-   * Adds Webpack "hot module accept" code "a-la ESM" style,
-   * i.e. using import.meta.webpackHot
-   * @param {object} path
-   */
-  const addEsmWebpackHotModuleAccept = (
-    path: NodePath,
-    importedPath: string,
-  ) => {
-    const test = types.memberExpression(
-      types.memberExpression(
-        types.identifier('import'),
-        types.identifier('meta'),
-      ),
-      types.identifier('webpackHot'),
-    );
-    const consequent = types.blockStatement([
-      types.expressionStatement(
-        types.callExpression(
-          types.memberExpression(
-            types.memberExpression(
-              types.memberExpression(
-                types.identifier('import'),
-                types.identifier('meta'),
-              ),
-              types.identifier('webpackHot'),
-            ),
-            types.identifier('accept'),
-          ),
-          [
-            types.stringLiteral(importedPath),
-            types.functionExpression(null, [], types.blockStatement([
-              types.expressionStatement(
-                types.callExpression(
-                  types.identifier('require'),
-                  [types.stringLiteral(importedPath)],
-                ),
-              ),
-            ])),
-          ],
-        ),
-      ),
-    ]);
-
-    const programPath = path.findParent((parentPath) => parentPath.isProgram());
-    if (programPath?.type !== 'Program') throw Error('Internal error');
-
-    const firstNonImportDeclarationNode = programPath.get('body')
-      .find((node) => !types.isImportDeclaration(node as Node));
-
-    const hotAcceptStatement = types.ifStatement(test, consequent);
-
-    if (firstNonImportDeclarationNode) {
-      firstNonImportDeclarationNode.insertBefore(hotAcceptStatement);
-    } else {
-      programPath.pushContainer('body', hotAcceptStatement);
-    }
-  };
-
   const loadStyleMap = (
     name: string,
     importedPath: string,
@@ -262,18 +155,6 @@ export default ({
       if (!styleMapsByPath) throw Error('Missing style maps bucket');
 
       styleMapsByPath[importedPath] = styleMap;
-
-      const { replaceImport, webpackHotModuleReloading } = stats.opts;
-
-      // replaceImport flag means we target server-side environment,
-      // thus client-side Webpack's HMR code should not be injected.
-      if (!replaceImport) {
-        if (webpackHotModuleReloading === 'commonjs') {
-          addCommonJsWebpackHotModuleAccept(path, importedPath);
-        } else if (webpackHotModuleReloading) {
-          addEsmWebpackHotModuleAccept(path, importedPath);
-        }
-      }
     }
 
     return styleMap;
@@ -325,8 +206,6 @@ export default ({
                 createObjectExpression(styleMap),
               );
             } else path.remove();
-          } else if (stats.opts.removeImport) {
-            path.remove();
           }
         } catch (error) {
           stopWorker();
@@ -440,8 +319,6 @@ export default ({
                 types.variableDeclaration('const', variables),
               );
             } else path.remove();
-          } else if (stats.opts.removeImport) {
-            path.remove();
           }
         } catch (error) {
           stopWorker();

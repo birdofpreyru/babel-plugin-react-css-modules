@@ -370,9 +370,6 @@ you.
   imports for server-side rendering purposes. [See details below](#server-side-rendering).
   Defaults _false_.
 
-- `webpackHotModuleReloading` &mdash; **boolean** | `"commonjs"` &mdash; Enables
-  injection of [Hot Module Reloading] code.
-
 - `handleMissingStyleName` &mdash; `ignore` | `throw` | `warn` &mdash;
   Determines what should be done for undefined CSS modules (using a `styleName`
   for which there is no CSS module defined). Defaults `"throw"`.
@@ -389,9 +386,6 @@ you.
 
 - `autoResolveMultipleImports` &mdash; **boolean** &mdash; Allows multiple
   anonymous imports if`styleName` is only in one of them. Defaults _true_.
-
-### Deprecated Plugin Options
-- ~~`removeImport` &mdash; **boolean**~~ &mdash; Use `replaceImport` option instead.
 
 ### Configurate syntax loaders
 [Configurate syntax loaders]: #configurate-syntax-loaders
@@ -445,30 +439,6 @@ two steps:
         "postcss-nested"
       ]
     ```
-
-### Hot Module Reloading
-[Hot Module Reloading]: #hot-module-reloading
-
-If you don't know what is Hot Module Reloading (HMR), refer to the
-[Webpack documentation](https://webpack.js.org/concepts/hot-module-replacement).
-
-If you use HMR in your development setup (you probably should), depending on
-your particular configuration you might need to enable `webpackHotModuleReloading`
-option of this plugin, or you may need to leave it disabled (default), as other
-loaders / plugins in your Webpack pipeline for CSS may already inject required
-HMR code.
-
-In case you decide to enable it in this plugin, `webpackHotModuleReloading`
-option may be set equal:
-
-- _true*_ &mdash; this plugin will inject HMR accept code for each imported CSS
-  module, using `import.meta.webpackHot` (ESM) syntax
-  ([see for details](https://webpack.js.org/api/hot-module-replacement)).
-
-- `commonjs` &mdash; this plugin will inject HMR accept code using
-  the legacy `module.hot` syntax.
-
-The default value is _false_ &mdash; this plugin does not inject HMR accept code.
 
 ### transform
 [transform]: #transform
