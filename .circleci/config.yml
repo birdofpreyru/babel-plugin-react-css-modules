@@ -38,7 +38,7 @@ jobs:
             *install-and-test
       - run: |
           export NPM_ID_TOKEN=$(circleci run oidc get --claims '{"aud": "npm:registry.npmjs.org"}')
-          npm publish --access public --tag v8-alpha
+          npm publish --access public
 
 test-filters: &test-filters
   filters:
